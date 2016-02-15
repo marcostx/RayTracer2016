@@ -16,6 +16,8 @@
 #include <time.h>
 #include "BVH.h"
 #include "RayTracer.h"
+#include "Intersection.h"
+#include "Model.h"
 
 #define MAX_RAY_DEPTH 3 
 
@@ -237,58 +239,58 @@ RayTracer::trace(const Ray& ray, uint level, REAL weight)
   // que nao sera sempre 0 e o peso, calcular a cor do raio
   // de pixel (cor do objeto no ponto Ri)
   // 
-/*
-  Object *object = NULL; 
+
+  // Variaveis
+  ModelPtr object = NULL; 
   float minDist = INFINITY; 
-  Point pHit; 
+  Intersection pHit; 
   Normal nHit;
+
   minDistance = 10000000
+
+  /**
+    pegando o objeto mais perto para traçar o raio
+  **/
   for (int k = 0; k < objects.size(); ++k) { 
-      if (Intersect(objects[k], ray, &pHit, &nHit)) { 
-          // ray origin = eye position of it's the prim ray
-          float distance = Distance(ray.origin, pHit); 
-          // finding the nearest object
+      if (objects[k].intersect(ray, &pHit)) { 
+          
+          float distance = pHit.distance; 
+          // atualizando o objeto mais proximo
           if (distance < minDistance) { 
               object = objects[i]; 
               minDistance = distance; 
           } 
       } 
   } 
-  // if there's nothing in scene, return 0
+
+  // se nao tem ninguem na cena, retorna 0 
   if (object == NULL) 
       return 0; 
 
-  // if the material has reflection ..
-  if (object->hasReflection && level < MAX_RAY_DEPTH) { 
+  // se o material tem reflexao ...
+  // Obs.: ainda tem que arrumar
+  if (object.getMateria().hasRefletion() && level < MAX_RAY_DEPTH) { 
       // compute reflection
       Ray reflectionRay; 
       reflectionRay = computeReflectionRay(ray.direction, nHit); 
       // recurse
-      Color reflectionColor = trace(reflectionRay, level + 1,weight); 
-      Ray refractioRay; 
-      refractionRay = computeRefractionRay(object->indexOfRefraction,ray.direction,nHit); 
-      // recurse
-      Color refractionColor = trace(refractionRay, level + 1,weight); 
-      float Kr, Kt; 
-      fresnel( 
-          object->indexOfRefraction, 
-          nHit, 
-          ray.direction, 
-          &Kr, 
-          &Kt); 
-      return reflectionColor * Kr + refractionColor * (1-Kr); 
+      Color reflectionColor = trace(reflectionRay, level + 1,weight);
+      return reflectionColor; 
   } 
-  // object is a diffuse opaque object        
-  // compute illumination
+
+  // O objeto eh opaco       
+  // verificar se o raio de sombra intercepta alguem
   Ray shadowRay; 
   shadowRay.direction = lightPosition - pHit; 
-  bool isShadow = false; 
+  Intersection shadowRayIntersection;
   for (int k = 0; k < objects.size(); ++k) { 
-      if (Intersect(objects[k], shadowRay)) { 
-          // hit point is in shadow so just return
+      if (objects[k].intersect(shadowRay, shadowRayIntersection)) { 
           return 0; 
       } 
-  } 
-    // point is illuminated
-  return object->color * light.brightness; */
+  }
+
+  // se nao intercepta ninguem, l ilumina diretamente o objeto
+  // TODO: calcular a cor do objeto no ponto de acordo com o modelo local de Phong 
+  // 
+  return object->color;
 }

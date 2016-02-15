@@ -69,6 +69,7 @@ public:
   void debug(int, int, DebugInfo&);
 
 protected:
+  // supostamente, o array de atores da cena
   ObjectPtr<Model> aggregate;
   uint maxRecursionLevel;
   REAL minWeight;
