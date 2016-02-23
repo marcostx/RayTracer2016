@@ -32,7 +32,7 @@ public:
   Color backgroundColor;
   Color ambientLight;
 
-  static Scene* New();
+  static Scene* New();	
 
   // Constructor
   Scene(const string& name):

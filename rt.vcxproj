@@ -109,7 +109,6 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
     <ClCompile Include="source\BVH.cpp" />
     <ClCompile Include="source\Camera.cpp" />
     <ClCompile Include="source\Color.cpp" />
@@ -118,16 +117,21 @@
     <ClCompile Include="source\GLPainter.cpp" />
     <ClCompile Include="source\GLProgram.cpp" />
     <ClCompile Include="source\GLRenderer.cpp" />
+    <ClCompile Include="source\gltest.cpp" />
     <ClCompile Include="source\Material.cpp" />
     <ClCompile Include="source\MeshReader.cpp" />
     <ClCompile Include="source\MeshSweeper.cpp" />
     <ClCompile Include="source\Model.cpp" />
+    <ClCompile Include="source\Parser.cpp" />
+    <ClCompile Include="source\pugixml.cpp" />
     <ClCompile Include="source\RayTracer.cpp" />
     <ClCompile Include="source\Renderer.cpp" />
     <ClCompile Include="source\Scene.cpp" />
+    <ClCompile Include="source\SceneReader.cpp" />
     <ClCompile Include="source\Sweeper.cpp" />
     <ClCompile Include="source\TriangleMesh.cpp" />
     <ClCompile Include="source\TriangleMeshShape.cpp" />
+    <ClCompile Include="teste.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Actor.h" />
@@ -163,10 +167,12 @@
     <ClInclude Include="include\Model.h" />
     <ClInclude Include="include\NameableObject.h" />
     <ClInclude Include="include\Object.h" />
+    <ClInclude Include="include\Parser.h" />
     <ClInclude Include="include\RayTracer.h" />
     <ClInclude Include="include\Renderer.h" />
     <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\SceneComponent.h" />
+    <ClInclude Include="include\SceneReader.h" />
     <ClInclude Include="include\Sweeper.h" />
     <ClInclude Include="include\TriangleMesh.h" />
     <ClInclude Include="include\TriangleMeshShape.h" />

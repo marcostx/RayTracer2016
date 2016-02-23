@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<rt>
+  <image>
+    <width>800</width>
+    <height>600</height>
+  </image>
+  <camera>
+    <position>0 0 10</position>
+    <to>0 0 0</to>
+    <up>0 1 0</up>
+    <angle>60</angle>
+    <aspect>16:9</aspect>
+    <projection>perspective</projection>
+  </camera>
+  <scene name="simple-scene">
+    <background>0 0 0</background>
+    <ambient>0.5 0.5 0.5</ambient>
+    <mesh file="f-16.obj">
+      <transform>
+        <scale>2</scale>
+        <rotation>
+          <axis>0 0 1</axis>
+          <angle>30</angle>
+        </rotation>
+        <position>10 10 10</position>
+      </transform>
+      <material>
+        <ambient>0.2 0.2 0.2</ambient>
+        <diffuse>0.5 0 0</diffuse>
+        <spot>0.3 0 0</spot>
+        <shine>10</shine>
+      </material>
+    </mesh>
+    <light type="point">
+      <position>-1 0 0</position>
+      <color>1 1 1</color>
+      <falloff>1</falloff>
+    </light>
+  </scene>
+</rt>
