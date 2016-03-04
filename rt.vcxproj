@@ -109,6 +109,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="source\BVH.cpp" />
     <ClCompile Include="source\Camera.cpp" />
     <ClCompile Include="source\Color.cpp" />
@@ -117,7 +118,6 @@
     <ClCompile Include="source\GLPainter.cpp" />
     <ClCompile Include="source\GLProgram.cpp" />
     <ClCompile Include="source\GLRenderer.cpp" />
-    <ClCompile Include="source\gltest.cpp" />
     <ClCompile Include="source\Material.cpp" />
     <ClCompile Include="source\MeshReader.cpp" />
     <ClCompile Include="source\MeshSweeper.cpp" />
@@ -131,7 +131,6 @@
     <ClCompile Include="source\Sweeper.cpp" />
     <ClCompile Include="source\TriangleMesh.cpp" />
     <ClCompile Include="source\TriangleMeshShape.cpp" />
-    <ClCompile Include="teste.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Actor.h" />

@@ -5,6 +5,8 @@
 #include "MeshReader.h"
 #include "MeshSweeper.h"
 #include "RayTracer.h"
+#include "pugixml.hpp"
+#include "Parser.h"
 
 #define WIN_W 1024
 #define WIN_H 768
@@ -12,16 +14,41 @@
 using namespace Graphics;
 
 // Render globals
-GLRenderer* renderer;
+GLRenderer* render;
+// Ray Tracer 
 RayTracer* rayTracer;
+
 GLImage* frame;
 uint timestamp;
-bool traceFlag;
-int W;
-int H;
 
-// Light globals
-Light* light;
+// Windows Ids
+int currentWindowId;
+int mainWindowId;
+int windowId;
+
+// Window size
+int W = WIN_W;
+int H = WIN_H;
+
+// Pixels to trace a ray to
+int X = 0, Y = 0;
+bool traceFlag;
+
+// Subwindows sizes
+int x_, y_, W_, H_;
+int border = 20;
+
+// Scene
+Scene* scene;
+
+// Camera
+Camera* camera;
+
+// Actor Camera
+Primitive* cameraPrimitive;
+
+// Scene Parser
+Parser* sceneParser;
 
 // Mouse globals
 int mouseX;
@@ -39,96 +66,41 @@ const float ZOOM_SCALE = 1.01f;
 bool animateFlag;
 const int UPDATE_RATE = 40;
 
+void drawFrustum();
+
 inline void
 printControls()
 {
   printf("\n"
-    "Camera controls:\n"
+    "Options:\n"
     "----------------\n"
-    "(w) pan forward  (s) pan backward\n"
-    "(q) pan up       (z) pan down\n"
-    "(a) pan left     (d) pan right\n"
-    "(+) zoom in      (-) zoom out\n"
-    "GL render mode controls:\n"
-    "------------------------\n"
-    "(b) bounds       (n) normals       (v) axes\n"
-    "(.) wireframe    (;) hiddenlines   (/) smooth\n\n");
+    "(o) OpenGL       (r) Ray Tracer\n");
 }
 
 static bool drawAxes = false;
 static bool drawBounds = false;
 static bool drawNormals = false;
+static bool drawFrustumFlag = false;
 
 void
 processKeys()
 {
-  Camera* camera = renderer->getCamera();
-
-  for (int i = 0; i < MAX_KEYS; i++)
+  for (int i = 0; i < 2; i++)
   {
     if (!keys[i])
       continue;
 
-    float len = camera->getDistance() * CAMERA_RES;
-
     switch (i)
     {
-      // Camera controls
-      case 'w':
-        camera->move(0, 0, -len);
-        break;
-      case 's':
-        camera->move(0, 0, +len);
-        break;
-      case 'q':
-        camera->move(0, +len, 0);
-        break;
-      case 'z':
-        camera->move(0, -len, 0);
-        break;
-      case 'a':
-        camera->move(-len, 0, 0);
-        break;
-      case 'd':
-        camera->move(+len, 0, 0);
-        break;
-      case '-':
-        camera->zoom(1.0f / ZOOM_SCALE);
-        keys[i] = false;
-        break;
-      case '+':
-        camera->zoom(ZOOM_SCALE);
-        keys[i] = false;
-        break;
-      case 'p':
-        camera->changeProjectionType();
-        break;
-      case 'b':
-        drawBounds ^= true;
-        renderer->flags.enable(GLRenderer::DrawSceneBounds, drawBounds);
-        renderer->flags.enable(GLRenderer::DrawActorBounds, drawBounds);
-        break;
-      case 'v':
-        drawAxes ^= true;
-        renderer->flags.enable(GLRenderer::DrawAxes, drawAxes);
-        break;
-      case 'n':
-        drawNormals ^= true;
-        renderer->flags.enable(GLRenderer::DrawNormals, drawNormals);
-        break;
-      case '.':
-        renderer->renderMode = GLRenderer::Wireframe;
-        break;
-      case ';':
-        renderer->renderMode = GLRenderer::HiddenLines;
-        break;
-      case '/':
-        renderer->renderMode = GLRenderer::Smooth;
-        break;
+      // processing options
+    case 'o':
+      traceFlag = false;
+      break;
+    case 't':
+      traceFlag = true;
+      break;
     }
   }
-  if (camera->isModified())
-    traceFlag = false;
 }
 
 void
@@ -136,10 +108,8 @@ initGL(int *argc, char **argv)
 {
   glutInit(argc, argv);
   glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE);
-  //glutInitContextProfile(GLUT_CORE_PROFILE);
-  //glutInitContextVersion(3, 3);
-  glutInitWindowSize(WIN_W, WIN_H);
-  glutCreateWindow("RT");
+  glutInitWindowSize(W, H);
+  mainWindowId = glutCreateWindow(scene->getName().c_str());
   GLSL::init();
   glutReportErrors();
 }
@@ -147,9 +117,10 @@ initGL(int *argc, char **argv)
 void
 displayCallback()
 {
+  glutSetWindow(mainWindowId);
   processKeys();
   if (!traceFlag)
-    renderer->render();
+    render->render();
   else
   {
     if (frame == 0)
@@ -160,7 +131,6 @@ displayCallback()
 
     if (timestamp != ct)
     {
-      light->position = camera->getPosition();
       frame->lock(ImageBuffer::Write);
       rayTracer->renderImage(*frame);
       frame->unlock();
@@ -175,8 +145,8 @@ void
 reshapeCallback(int w, int h)
 {
   W = roundupImageWidth(w);
-  renderer->setImageSize(W, H = h);
-  renderer->getCamera()->setAspectRatio(REAL(W) / REAL(H));
+  render->setImageSize(W, H = h);
+  render->getCamera()->setAspectRatio(REAL(W) / REAL(H));
   if (frame != 0)
   {
     delete frame;
@@ -184,7 +154,7 @@ reshapeCallback(int w, int h)
     timestamp = 0;
     traceFlag = false;
   }
-  printf("Image size: %dx%d\n", w, h);
+  printf("Image new size: %dx%d\n", w, h);
 }
 
 void
@@ -197,19 +167,19 @@ mouseCallback(int, int, int x, int y)
 void
 motionCallback(int x, int y)
 {
-  Camera* camera = renderer->getCamera();
-  const float da = camera->getViewAngle() * CAMERA_RES;
-  const float ay = (mouseX - x) * da * !keys['x'];
-  const float ax = (mouseY - y) * da * !keys['y'];
+  Camera *camera = render->getCamera();
+  float da = camera->getViewAngle() * CAMERA_RES;
+  float ay = (mouseX - x) * da;
+  float ax = (mouseY - y) * da;
+
+  camera->rotateYX(ay, ax);
 
   mouseX = x;
   mouseY = y;
-  if (ax != 0 || ay != 0)
-  {
-    keys['r'] ? camera->roll(ay) : camera->rotateYX(ay, ax);
-    traceFlag = false;
-    glutPostRedisplay();
-  }
+  
+  traceFlag = false;
+
+  glutPostRedisplay();
 }
 
 void
@@ -218,9 +188,9 @@ mouseWheelCallback(int, int dir, int, int y)
   if (y == 0)
     return;
   if (dir > 0)
-    renderer->getCamera()->zoom(ZOOM_SCALE);
+    render->getCamera()->zoom(ZOOM_SCALE);
   else
-    renderer->getCamera()->zoom(1.0f / ZOOM_SCALE);
+    render->getCamera()->zoom(1.0f / ZOOM_SCALE);
   traceFlag = false;
   glutPostRedisplay();
 }
@@ -233,7 +203,7 @@ idleCallback()
 
   if (abs(time - currentTime) >= UPDATE_RATE)
   {
-    Camera* camera = renderer->getCamera();
+    Camera* camera = render->getCamera();
 
     camera->azimuth(camera->getHeight() * CAMERA_RES);
     currentTime = time;
@@ -245,84 +215,74 @@ idleCallback()
 void
 keyboardCallback(unsigned char key, int /*x*/, int /*y*/)
 {
+  glutSetWindow(currentWindowId);
   keys[key] = true;
-  glutPostRedisplay();
+  //glutPostRedisplay();
 }
 
 void
 keyboardUpCallback(unsigned char key, int /*x*/, int /*y*/)
 {
+  glutSetWindow(currentWindowId);
   keys[key] = false;
   switch (key)
   {
-    case 27:
-      exit(EXIT_SUCCESS);
-      break;
-    case 't':
-      traceFlag ^= true;
-      glutPostRedisplay();
-      break;
-    case 'o':
-      animateFlag ^= true;
-      glutIdleFunc(animateFlag ? idleCallback : 0);
-      glutPostRedisplay();
-      break;
+  case 27:
+    exit(EXIT_SUCCESS);
+    break;
+  case 't':
+    traceFlag = true;
+    glutPostRedisplay();
+    break;
+  case 'o':
+    animateFlag = true;
+    glutIdleFunc(animateFlag ? idleCallback : 0);
+    glutPostRedisplay();
+    break;
   }
 }
 
-Actor*
-newActor(TriangleMesh* mesh,
-  const vec3f& position = vec3f::null(),
-  const vec3f& size = vec3f(1),
-  const Color& color = Color::white)
+void glutCallbacks()
 {
-  Primitive* p = new TriangleMeshShape(mesh);
-
-  p->setMaterial(MaterialFactory::New(color));
-  p->setTransform(position, quat::identity(), size);
-  return new Actor(*p);
-}
-
-Scene*
-createTestScene()
-{
-  Scene* scene = new Scene("test");
-  TriangleMesh* s = MeshSweeper::makeSphere();
-
-  scene->addActor(newActor(s, vec3(-3, -3, 0), vec3(1, 1, 1), Color::yellow));
-  scene->addActor(newActor(s, vec3(+3, -3, 0), vec3(2, 1, 1), Color::green));
-  scene->addActor(newActor(s, vec3(+3, +3, 0), vec3(1, 2, 1), Color::red));
-  scene->addActor(newActor(s, vec3(-3, +3, 0), vec3(1, 1, 2), Color::blue));
-  s = MeshReader().execute("f-16.obj");
-  scene->addActor(newActor(s, vec3(2, -4, -10)));
-  return scene;
-}
-
-int
-main(int argc, char **argv)
-{
-  // init OpenGL
-  initGL(&argc, argv);
-  glutDisplayFunc(displayCallback);
-  glutReshapeFunc(reshapeCallback);
   glutMouseFunc(mouseCallback);
   glutMotionFunc(motionCallback);
   glutMouseWheelFunc(mouseWheelCallback);
   glutKeyboardFunc(keyboardCallback);
   glutKeyboardUpFunc(keyboardUpCallback);
-  // print controls
+}
+
+int
+main(int argc, char **argv)
+{
+  if (argc != 2)
+  {
+    printf("Informe o arquivo XML com a cena.");
+    return 0;
+  }
+
+  sceneParser = new Parser(argv[1]);
+  sceneParser->parseImage(H, W);
+
+  camera = sceneParser->parseCamera();
+  scene = sceneParser->parseScene();
+
+  // init OpenGL
+  initGL(&argc, argv);
+  glutDisplayFunc(displayCallback);
+  glutReshapeFunc(reshapeCallback);
+  glutCallbacks();
+
+  // create the renderers
+  render = new GLRenderer(*scene, camera);
+  render->renderMode = GLRenderer::Smooth;
+
+  rayTracer = new RayTracer(*scene, camera);
+
+  // print usage
   printControls();
 
-  // create scene and camera
-  Scene* scene = createTestScene();
-  Camera* camera = new Camera();
-  // create the renderers
-  renderer = new GLRenderer(*scene, camera);
-  renderer->renderMode = GLRenderer::Smooth;
-  rayTracer = new RayTracer(*scene, camera);
-  // create a light
-  light = new Light(vec3::null());
-  scene->addLight(light);
+  // glut loop
   glutMainLoop();
+
   return 0;
 }

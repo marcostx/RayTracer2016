@@ -1,6 +1,5 @@
 #include "Parser.h"
 #include <iostream>
-#include "SceneReader.h"
 
 using namespace std;
 int

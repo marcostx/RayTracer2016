@@ -16,6 +16,7 @@
 #include <time.h>
 #include "BVH.h"
 #include "RayTracer.h"
+#include "algorithm"
 
 using namespace std;
 using namespace Graphics;
@@ -231,6 +232,85 @@ RayTracer::trace(const Ray& ray, uint level, REAL weight)
 //|  @return color of the ray                           |
 //[]---------------------------------------------------[]
 {
-  // TODO: INSERT YOUR CODE HERE
-  return Color::black;
+	// limiar
+	if (weight < getMinWeight() && level < getMaxRecursionLevel())
+	{
+		Intersection inter_;
+		numberOfRays++;
+
+		// if the ray intersect some actor in scene
+		if (aggregate->intersect(ray, inter_))
+		{
+			Color r_;
+
+			LightIterator lit = scene->getLightIterator();
+
+			while (lit.current() != 0)
+			{
+				vec3 L;
+				double mDistance; // max distance to try a intersection
+
+				Light* light = lit.current();
+
+				// obtaining the light attr 
+
+				if (light->isDirectional())
+				{
+					L = light->position.versor();
+					mDistance = 70;
+				}
+				// not directional light ..
+				else
+				{
+					// ray direction from light position to pixel ray intersection point
+					L = (inter_.p - light->position).versor();
+					mDistance = (inter_.p - light->position).length();
+				}
+
+				Ray shadowR(inter_.p, -L, 0.001f, mDistance);
+				Intersection shadowRayInter;
+
+				// Now, lets see if the shadow ray intersect another actor in scene
+				// cos, in this case, the color of the material at point inter.p will
+				// be black
+				if (!aggregate->intersect(shadowR, shadowRayInter))
+				{
+					Color difuseColor = inter_.object->getMaterial()->surface.diffuse;
+					vec3 normalAtP = inter_.triangle->normal(inter_);
+
+					REAL alphaCos = (normalAtP.negate()).dot(L);
+
+					if (Math::isPositive(alphaCos))
+						r_ += difuseColor * alphaCos * light->getScaledColor(mDistance); // updating the color 
+
+				}
+				lit++;
+			}
+
+			Color Or;
+
+			Or = inter_.object->getMaterial()->surface.specular;
+
+			if (Or.r != 0.0 && Or.g != 0.0 && Or.b != 0.0)
+			{
+				// N
+				vec3 normalAtP = inter_.triangle->normal(inter_);
+				// Vr = (V - (2 * (N*V))N
+				vec3 directionOfReflection = (ray.direction - (2 * normalAtP.dot(ray.direction)) * normalAtP).versor();
+
+				Ray reflectionRay(inter_.p, directionOfReflection, 0.0001f);
+
+				// getting the highest component value
+				float highestComponent = std::max(std::max(Or.r, Or.g), Or.b);
+
+				r_ += Or * trace(reflectionRay, level + 1, weight * highestComponent);
+			}
+
+			return inter_.object->getMaterial()->surface.ambient * scene->ambientLight + r_;
+		}
+		else
+			return scene->backgroundColor;
+	}
+	else
+		return Color::black;
 }
