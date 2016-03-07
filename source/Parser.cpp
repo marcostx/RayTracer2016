@@ -121,6 +121,18 @@ Scene* Parser::parseScene(){
 		if (strcmp(sceneElement->name(), "mesh") == 0)
 			_s->addActor(parseMesh(sceneElement));
 
+		if (strcmp(sceneElement->name(), "sphere") == 0)
+			_s->addActor(parseSphere(sceneElement));
+
+		if (strcmp(sceneElement->name(), "box") == 0)
+			_s->addActor(parseBox(sceneElement));
+
+		if (strcmp(sceneElement->name(), "cone") == 0)
+			_s->addActor(parseCone(sceneElement));
+
+		if (strcmp(sceneElement->name(), "cylinder") == 0)
+			_s->addActor(parseCylinderh(sceneElement));
+
 		else if (strcmp(sceneElement->name(), "light") == 0){
 			light = parseLight(sceneElement);
 			_s->addLight(light);
@@ -128,6 +140,82 @@ Scene* Parser::parseScene(){
 	}
 
 	return _s;
+}
+
+Actor* Parser::parseSphere(xml_node_iterator sceneElement)
+{
+	// default values
+	vec3 center(0,0,0);
+	REAL radius=1.0;
+	int meridians=16;
+
+	// opt values
+	xml_node op;
+	op = sceneElement.child("center");
+	REAL x,y,z;
+	if ( op != NULL )
+	{
+		const char* center_vector = op.text().as_string();
+
+		sscanf(center_vector,"%f %f %f",&x,&y,&z);
+		center.set(x,y,z);
+	}
+	op = sceneElement.child("radius");
+	if (op != NULL)
+		radius = op.text.as_float();
+	op = sceneElement.child("meridians");
+	if (op != NULL)
+		meridians = op.text.as_int();
+
+	// now, lets make the mesh of Sphere
+	TriangleMesh* sphereMesh = MeshSweeper::makeSphere(center,radius,meridians);
+
+	Primitive* mesh = new TriangleMeshShape(sphereMesh);
+
+	if ((op = sceneElement->child("transform")) != NULL) {
+		vec3 position(0, 0, 0);
+		quat q(vec3(0, 0, 0));
+		vec3 scale(1,1,1);
+		float x, y, z;
+
+		xml_object_range<xml_node_iterator> transformations = op.children();
+
+		for (xml_node_iterator transformation = transformations.begin(); transformation != transformations.end(); ++transformation)
+		{
+			if (strcmp(transformation->name(), "position") == 0)
+			{
+				const char * stringTranslation = transformation->text().as_string();
+
+				sscanf(stringTranslation, "%f %f %f", &x, &y, &z);
+				vec3 translationVec(x, y, z);
+				position = translationVec;
+			}
+			else if (strcmp(transformation->name(), "scale") == 0)
+			{
+				float s_ = transformation->text().as_float();
+				vec3 newS(s_, s_, s_);
+				scale = newS;
+			}
+			else if (strcmp(transformation->name(), "rotation") == 0)
+			{
+				float angle = transformation->child("angle").text().as_float();
+
+				const char * _Axis = transformation->child("axis").text().as_string();
+				sscanf(_Axis, "%f %f %f", &x, &y, &z);
+				vec3 axis(x, y, z);
+				q = quat(axis, angle);
+			}
+
+			mesh->transform(mat4::TRS(position, q, scale));
+		}
+	}
+	if ((op = sceneElement->child("material")) != NULL) {
+		Material * material = parseMaterial(op);
+		primitive->setMaterial(material);
+	}
+
+	return new Actor(*primitive);
+	
 }
 	
 Light* Parser::parseLight(xml_node_iterator sceneElement)
@@ -255,7 +343,7 @@ Actor* Parser::parseMesh(xml_node_iterator sceneElement)
 				q = quat(axis, angle);
 			}
 
-			mesh->transform(mat4::TRS(position, q, scale));
+			primitive->transform(mat4::TRS(position, q, scale));
 		}
 	}
 	if ((op = sceneElement->child("material")) != NULL) {
