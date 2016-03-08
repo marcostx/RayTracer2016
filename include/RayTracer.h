@@ -24,6 +24,7 @@ namespace Graphics
 
 #define MIN_WEIGHT REAL(0.001)
 #define MAX_RECURSION_LEVEL 20
+#define ADAPT_DISTANCE 0.06
 
 
 //////////////////////////////////////////////////////////
@@ -64,7 +65,7 @@ public:
   }
 
   void render();
-  virtual void renderImage(Image&);
+  virtual void renderImage(Image&,bool);
 
   void debug(int, int, DebugInfo&);
 
@@ -76,7 +77,10 @@ protected:
   virtual void scan(Image&);
   virtual void setPixelRay(REAL, REAL);
   virtual Color shoot(REAL, REAL);
+  virtual void adaptativeScan(Image&);
   virtual Color trace(const Ray&, uint, REAL);
+  virtual Color shade(const Ray&, uint, REAL);
+  virtual Color subDivision(int,int, REAL,int);
 
   // TODO: INSERT YOUR CODE HERE
 

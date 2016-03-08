@@ -86,22 +86,73 @@ static bool drawFrustumFlag = false;
 void
 processKeys()
 {
-  for (int i = 0; i < 2; i++)
-  {
-    if (!keys[i])
-      continue;
+	Camera* camera = render->getCamera();
 
-    switch (i)
-    {
-      // processing options
-    case 'o':
-      traceFlag = false;
-      break;
-    case 't':
-      traceFlag = true;
-      break;
-    }
-  }
+	for (int i = 0; i < MAX_KEYS; i++)
+	{
+		if (!keys[i])
+			continue;
+
+		float len = camera->getDistance() * CAMERA_RES;
+
+		switch (i)
+		{
+			// Camera controls
+			case 'w':
+				camera->move(0, 0, -len);
+				break;
+			case 's':
+				camera->move(0, 0, +len);
+				break;
+			case 'q':
+				camera->move(0, +len, 0);
+				break;
+			case 'z':
+				camera->move(0, -len, 0);
+				break;
+			case 'a':
+				camera->move(-len, 0, 0);
+				break;
+			case 'd':
+				camera->move(+len, 0, 0);
+				break;
+			case '-':
+				camera->zoom(1.0f / ZOOM_SCALE);
+				keys[i] = false;
+				break;
+			case '+':
+				camera->zoom(ZOOM_SCALE);
+				keys[i] = false;
+				break;
+			case 'p':
+				camera->changeProjectionType();
+				break;
+			case 'b':
+				drawBounds ^= true;
+				render->flags.enable(GLRenderer::DrawSceneBounds, drawBounds);
+				render->flags.enable(GLRenderer::DrawActorBounds, drawBounds);
+				break;
+			case 'v':
+				drawAxes ^= true;
+				render->flags.enable(GLRenderer::DrawAxes, drawAxes);
+				break;
+			case 'n':
+				drawNormals ^= true;
+				render->flags.enable(GLRenderer::DrawNormals, drawNormals);
+				break;
+			case '.':
+				render->renderMode = GLRenderer::Wireframe;
+				break;
+			case ';':
+				render->renderMode = GLRenderer::HiddenLines;
+				break;
+			case '/':
+				render->renderMode = GLRenderer::Smooth;
+				break;
+		}
+	}
+	if (camera->isModified())
+		traceFlag = false;
 }
 
 void
@@ -133,7 +184,7 @@ displayCallback()
     if (timestamp != ct)
     {
       frame->lock(ImageBuffer::Write);
-      rayTracer->renderImage(*frame);
+      rayTracer->renderImage(*frame,true);
       frame->unlock();
       timestamp = ct;
     }
@@ -217,8 +268,8 @@ void
 keyboardCallback(unsigned char key, int /*x*/, int /*y*/)
 {
 	glutSetWindow(mainWindowId);
-  keys[key] = true;
-  //glutPostRedisplay();
+    keys[key] = true;
+    glutPostRedisplay();
 }
 
 void

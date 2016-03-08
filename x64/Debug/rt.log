@@ -1,8 +1,13 @@
-﻿Build started 07/03/2016 21:59:43.
+﻿Build started 08/03/2016 11:08:05.
      1>Project "C:\Users\diego_mendes\Documents\CG\rt-2015\rt.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I./ /I./include /Zi /nologo /W3 /WX- /Od /D WIN32 /D _MBCS /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt /D"_CRT_SECURE_NO_WARNINGS" Main.cpp
-         Main.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /I./ /I./include /Zi /nologo /W3 /WX- /Od /D WIN32 /D _MBCS /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Debug\\" /Fd"x64\Debug\vc120.pdb" /Gd /TP /errorReport:prompt /D"_CRT_SECURE_NO_WARNINGS" source\RayTracer.cpp
+         RayTracer.cpp
+     1>source\RayTracer.cpp(215): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
+     1>source\RayTracer.cpp(216): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
+     1>source\RayTracer.cpp(217): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
+     1>source\RayTracer.cpp(238): warning C4244: 'argument' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\diego_mendes\documents\cg\rt-2015\source\raytracer.cpp(241): warning C4715: 'Graphics::RayTracer::subDivision' : not all control paths return a value
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\diego_mendes\Documents\CG\rt-2015\x64\Debug\rt.exe" /INCREMENTAL /NOLOGO /LIBPATH:./lib freeglut_static.lib glew64.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\diego_mendes\Documents\CG\rt-2015\x64\Debug\rt.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\diego_mendes\Documents\CG\rt-2015\x64\Debug\rt.lib" /MACHINE:X64 x64\Debug\Main.obj
          x64\Debug\BVH.obj
@@ -31,4 +36,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.71
+Time Elapsed 00:00:01.55

@@ -3,7 +3,7 @@
 //|                          GVSG Graphics Library                           |
 //|                               Version 1.0                                |
 //|                                                                          |
-//|              CopyrightÂ® 2007-2016, Paulo Aristarco Pagliosa              |
+//|              Copyright® 2007-2016, Paulo Aristarco Pagliosa              |
 //|              All Rights Reserved.                                        |
 //|                                                                          |
 //[]------------------------------------------------------------------------[]
@@ -17,6 +17,7 @@
 #include "BVH.h"
 #include "RayTracer.h"
 #include "algorithm"
+#include <stdlib.h>
 
 using namespace std;
 using namespace Graphics;
@@ -65,6 +66,7 @@ minWeight(MIN_WEIGHT)
 
 		if (mesh != 0)
 		{
+			// dealing with repeated primitives in scene
 			ModelPtr& a = aggregates[mesh->id];
 
 			if (a == 0)
@@ -117,7 +119,7 @@ static int64 numberOfRays;
 static int64 numberOfHits;
 
 void
-RayTracer::renderImage(Image& image)
+RayTracer::renderImage(Image& image, bool isAdaptative)
 //[]---------------------------------------------------[]
 //|  Run the ray tracer                                 |
 //[]---------------------------------------------------[]
@@ -136,7 +138,10 @@ RayTracer::renderImage(Image& image)
 	REAL height = camera->windowHeight();
 
 	W >= H ? V_w = (V_h = height) * W * I_h : V_h = (V_w = height) * H * I_w;
-	scan(image);
+	if (isAdaptative)
+		adaptativeScan(image);
+	else
+		scan(image);
 	printf("\nNumber of rays: %lu", numberOfRays);
 	printf("\nNumber of hits: %lu", numberOfHits);
 	printElapsedTime("\nDONE! ", clock() - t);
@@ -169,6 +174,70 @@ RayTracer::setPixelRay(REAL x, REAL y)
 	case Camera::Parallel:
 		pixelRay.origin = camera->getPosition() + p;
 		break;
+	}
+}
+
+void
+RayTracer::adaptativeScan(Image& image)
+//[]---------------------------------------------------[]
+//|  Adaptative scan for aliasing problem               |
+//[]---------------------------------------------------[]
+{
+	// init pixel ray
+	pixelRay = Ray(camera->getPosition(), -VRC_n);
+	numberOfRays = numberOfHits = 0;
+	int maxSubLevel = 6;
+
+	Pixel* pixels = new Pixel[W];
+
+	for (int j = 0; j < H; j++)
+	{
+		// top left
+
+		//printf("Scanning line %d of %d\r", j, H);
+		for (int i = 0; i < W; i++){
+			pixels[i] = subDivision(i, j, 1.0,0);
+		}
+		image.write(j, pixels);
+	}
+	delete[]pixels;
+}
+
+Color
+RayTracer::subDivision(int i, int j,REAL sub, int level)
+{
+	if (level < 6){
+		Color topLeft;
+		Color topRight;
+		Color bottomLeft;
+		Color bottomRight;
+
+		topLeft = shoot(i, j);
+		topRight = shoot(i + sub, j);
+		bottomLeft = shoot(i, j + sub);
+		bottomRight = shoot(i + sub, j + sub);
+
+		// computig mean
+		Color meanColor = (topLeft + topRight + bottomLeft + bottomRight);
+		meanColor = Color(meanColor.r / 4, meanColor.g / 4, meanColor.b / 4);
+
+		// checking if the value of colors get distance of the mean
+		Color topLeftDiff = meanColor - topLeft;
+		Color topRightDiff = meanColor - topRight;
+		Color bottomLeftDiff = meanColor - bottomLeft;
+		Color bottomRightDiff = meanColor - bottomRight;
+
+		// cheking threshold
+		if (std::max(std::max(fabs(topLeftDiff.r), fabs(topLeftDiff.g)), fabs(topLeftDiff.b)) < ADAPT_DISTANCE &&
+			std::max(std::max(fabs(topRightDiff.r), fabs(topRightDiff.g)), fabs(topRightDiff.b)) < ADAPT_DISTANCE &&
+			std::max(std::max(fabs(bottomLeftDiff.r), fabs(bottomLeftDiff.g)), fabs(bottomLeftDiff.b)) < ADAPT_DISTANCE &&
+			std::max(std::max(fabs(bottomRightDiff.r), fabs(bottomRightDiff.g)), fabs(bottomRightDiff.b)) < ADAPT_DISTANCE)
+			return meanColor;
+		else{
+			// tem que pensar melhor ...
+			//printf("teve que subdividir \n");
+			return subDivision(i, j, i / 2, level + 1);
+		}
 	}
 }
 
