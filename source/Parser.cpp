@@ -1,4 +1,5 @@
 #include "Parser.h"
+#include <iostream>
 
 Parser::Parser(const char * filename) {
 	xml.load_file(filename);
@@ -14,7 +15,7 @@ bool Parser::parseImage(int & height, int & width) {
 	}
 	return false;
 }
-	
+
 Camera* Parser::parseCamera(){
 	///
 	xml_node camera = root.child("camera");
@@ -22,18 +23,18 @@ Camera* Parser::parseCamera(){
 	if (camera != NULL)
 	{
 		// filling the params
-		float x,y,z;
+		float x, y, z;
 		Camera* c_ = new Camera();
 
 		const char* pos = camera.child("position").text().as_string();
-		sscanf(pos,"%f %f %f",&x,&y,&z);
+		sscanf(pos, "%f %f %f", &x, &y, &z);
 
-		vec3 vec_pos = vec3(x,y,z);
+		vec3 vec_pos = vec3(x, y, z);
 		// setting the camera position
 		c_->setPosition(vec_pos);
 
 		const char* focal = camera.child("to").text().as_string();
-		sscanf(focal,"%f %f %f",&x,&y,&z);
+		sscanf(focal, "%f %f %f", &x, &y, &z);
 		vec3 direction = vec3(x, y, z) - c_->getPosition();
 
 		// setting the D
@@ -42,21 +43,21 @@ Camera* Parser::parseCamera(){
 		c_->setDirectionOfProjection(direction.versor());
 
 		const char* vup = camera.child("up").text().as_string();
-		sscanf(vup,"%f %f %f",&x,&y,&z);
-		vec3 vec_vup = vec3(x,y,z);
+		sscanf(vup, "%f %f %f", &x, &y, &z);
+		vec3 vec_vup = vec3(x, y, z);
 		// setting the VUP
 		c_->setViewUp(vec_vup);
 
 		// optional settings
 		xml_node op;
 		op = camera.child("angle");
-		if ( op != NULL )
+		if (op != NULL)
 		{
 			float angle = op.text().as_float();
 			c_->setViewAngle(angle);
 		}
 		op = camera.child("aspect");
-		if ( op != NULL )
+		if (op != NULL)
 		{
 			const char* stringAspect = op.text().as_string();
 			int height;
@@ -65,14 +66,14 @@ Camera* Parser::parseCamera(){
 			c_->setAspectRatio((float)width / (float)height);
 		}
 		op = camera.child("projection");
-		if ( op != NULL )
+		if (op != NULL)
 		{
 			const char* proj = op.text().as_string();
-			
-			if (strcmp(proj,"parallel") == 0)
+
+			if (strcmp(proj, "parallel") == 0)
 				c_->setProjectionType(Camera::Parallel);
 			else
-				c_->setProjectionType(Camera::Perspective);	
+				c_->setProjectionType(Camera::Perspective);
 		}
 		return c_;
 	}
@@ -83,43 +84,55 @@ Camera* Parser::parseCamera(){
 Scene* Parser::parseScene(){
 	///
 	xml_node scene = root.child("scene");
-	
+
 	// optional name
 	Scene* _s;
 	if (scene.attribute("name") != NULL)
-		 _s = new Scene(scene.attribute("name").value());
+		_s = new Scene(scene.attribute("name").value());
 	else
-		 _s = Scene::New();
+		_s = Scene::New();
 
 	// optional settings
 	xml_node op;
 	op = scene.child("background");
-	float x,y,z;
-	if ( op != NULL )
+	float x, y, z;
+	if (op != NULL)
 	{
 		const char* back = op.text().as_string();
-		sscanf(back,"%f %f %f",&x,&y,&z);
+		sscanf(back, "%f %f %f", &x, &y, &z);
 
-		_s->backgroundColor = Color(x,y,z);
+		_s->backgroundColor = Color(x, y, z);
 		scene.remove_child("background");
 	}
 	op = scene.child("ambient");
-	if ( op != NULL )
+	if (op != NULL)
 	{
 		const char* amb = op.text().as_string();
-		sscanf(amb,"%f %f %f",&x,&y,&z);
+		sscanf(amb, "%f %f %f", &x, &y, &z);
 
-		_s->ambientLight = Color(x,y,z);
+		_s->ambientLight = Color(x, y, z);
 		scene.remove_child("ambient");
 	}
-	
+
 	// processing the objets in the scene
 	xml_object_range<xml_node_iterator> objets = scene.children();
 	Light* light;
 	for (xml_node_iterator sceneElement = objets.begin(); sceneElement != objets.end(); ++sceneElement) {
-		
+
 		if (strcmp(sceneElement->name(), "mesh") == 0)
 			_s->addActor(parseMesh(sceneElement));
+
+		if (strcmp(sceneElement->name(), "sphere") == 0)
+			_s->addActor(parseSphere(sceneElement));
+
+		if (strcmp(sceneElement->name(), "box") == 0)
+			_s->addActor(parseBox(sceneElement));
+
+		if (strcmp(sceneElement->name(), "cone") == 0)
+			_s->addActor(parseCone(sceneElement));
+
+		if (strcmp(sceneElement->name(), "cylinder") == 0)
+			_s->addActor(parseCylinder(sceneElement));
 
 		else if (strcmp(sceneElement->name(), "light") == 0){
 			light = parseLight(sceneElement);
@@ -129,77 +142,402 @@ Scene* Parser::parseScene(){
 
 	return _s;
 }
-	
+
+Actor*
+Parser::parseCylinder(xml_node_iterator sceneElement)
+{
+	vec3 center(0, 0, 0);
+	REAL radius = 1.0;
+	vec3 height(0, 1, 0);
+	int segments = 16;
+	// opt values
+	xml_node op;
+	op = sceneElement->child("center");
+	REAL x, y, z;
+	if (op != NULL)
+	{
+		const char* center_vector = op.text().as_string();
+
+		sscanf(center_vector, "%f %f %f", &x, &y, &z);
+		center.set(x, y, z);
+	}
+	op = sceneElement->child("radius");
+	if (op != NULL)
+		radius = op.text().as_float();
+	op = sceneElement->child("height");
+	if (op != NULL)
+	{
+		const char* height_vec = op.text().as_string();
+
+		sscanf(height_vec, "%f %f %f", &x, &y, &z);
+		height.set(x, y, z);
+	}
+	op = sceneElement->child("segments");
+	if (op != NULL)
+		segments = op.text().as_int();
+
+	// now, lets make the mesh of Sphere
+	TriangleMesh* coneMesh = MeshSweeper::makeCone(center, radius, height, segments);
+
+	Primitive* primitive = new TriangleMeshShape(coneMesh);
+
+	if ((op = sceneElement->child("transform")) != NULL) {
+		vec3 position(0, 0, 0);
+		quat q(vec3(0, 0, 0));
+		vec3 scale(1, 1, 1);
+		float x, y, z;
+
+		xml_object_range<xml_node_iterator> transformations = op.children();
+
+		for (xml_node_iterator transformation = transformations.begin(); transformation != transformations.end(); ++transformation)
+		{
+			if (strcmp(transformation->name(), "position") == 0)
+			{
+				const char * stringTranslation = transformation->text().as_string();
+
+				sscanf(stringTranslation, "%f %f %f", &x, &y, &z);
+				vec3 translationVec(x, y, z);
+				position = translationVec;
+			}
+			else if (strcmp(transformation->name(), "scale") == 0)
+			{
+				float s_ = transformation->text().as_float();
+				vec3 newS(s_, s_, s_);
+				scale = newS;
+			}
+			else if (strcmp(transformation->name(), "rotation") == 0)
+			{
+				float angle = transformation->child("angle").text().as_float();
+
+				const char * _Axis = transformation->child("axis").text().as_string();
+				sscanf(_Axis, "%f %f %f", &x, &y, &z);
+				vec3 axis(x, y, z);
+				q = quat(axis, angle);
+			}
+
+			coneMesh->transform(mat4::TRS(position, q, scale));
+		}
+	}
+	if ((op = sceneElement->child("material")) != NULL) {
+		Material * material = parseMaterial(op);
+		primitive->setMaterial(material);
+	}
+
+	return new Actor(*primitive);
+}
+
+Actor*
+Parser::parseCone(xml_node_iterator sceneElement)
+{
+	vec3 center(0, 0, 0);
+	REAL radius = 1.0;
+	vec3 height(0, 1, 0);
+	int segments = 16;
+	// opt values
+	xml_node op;
+	op = sceneElement->child("center");
+	REAL x, y, z;
+	if (op != NULL)
+	{
+		const char* center_vector = op.text().as_string();
+
+		sscanf(center_vector, "%f %f %f", &x, &y, &z);
+		center.set(x, y, z);
+	}
+	op = sceneElement->child("radius");
+	if (op != NULL)
+		radius = op.text().as_float();
+	op = sceneElement->child("height");
+	if (op != NULL)
+	{
+		const char* height_vec = op.text().as_string();
+
+		sscanf(height_vec, "%f %f %f", &x, &y, &z);
+		height.set(x, y, z);
+	}
+	op = sceneElement->child("segments");
+	if (op != NULL)
+		segments = op.text().as_int();
+
+	// now, lets make the mesh of Sphere
+	TriangleMesh* coneMesh = MeshSweeper::makeCone(center, radius, height,segments);
+
+	Primitive* primitive = new TriangleMeshShape(coneMesh);
+
+	if ((op = sceneElement->child("transform")) != NULL) {
+		vec3 position(0, 0, 0);
+		quat q(vec3(0, 0, 0));
+		vec3 scale(1, 1, 1);
+		float x, y, z;
+
+		xml_object_range<xml_node_iterator> transformations = op.children();
+
+		for (xml_node_iterator transformation = transformations.begin(); transformation != transformations.end(); ++transformation)
+		{
+			if (strcmp(transformation->name(), "position") == 0)
+			{
+				const char * stringTranslation = transformation->text().as_string();
+
+				sscanf(stringTranslation, "%f %f %f", &x, &y, &z);
+				vec3 translationVec(x, y, z);
+				position = translationVec;
+			}
+			else if (strcmp(transformation->name(), "scale") == 0)
+			{
+				float s_ = transformation->text().as_float();
+				vec3 newS(s_, s_, s_);
+				scale = newS;
+			}
+			else if (strcmp(transformation->name(), "rotation") == 0)
+			{
+				float angle = transformation->child("angle").text().as_float();
+
+				const char * _Axis = transformation->child("axis").text().as_string();
+				sscanf(_Axis, "%f %f %f", &x, &y, &z);
+				vec3 axis(x, y, z);
+				q = quat(axis, angle);
+			}
+
+			coneMesh->transform(mat4::TRS(position, q, scale));
+		}
+	}
+	if ((op = sceneElement->child("material")) != NULL) {
+		Material * material = parseMaterial(op);
+		primitive->setMaterial(material);
+	}
+
+	return new Actor(*primitive);
+}
+
+Actor*
+Parser::parseBox(xml_node_iterator sceneElement)
+{
+	vec3 center(0, 0, 0);
+	quat orientation(vec3(0, 0, 0));
+	vec3 scale(1, 1, 1);
+
+	// opt values
+	xml_node op;
+	op = sceneElement->child("center");
+	REAL x, y, z;
+	if (op != NULL)
+	{
+		const char* center_vector = op.text().as_string();
+
+		sscanf(center_vector, "%f %f %f", &x, &y, &z);
+		center.set(x, y, z);
+	}
+	op = sceneElement->child("orientation");
+	if (op != NULL){
+		const char* orientation_vec = op.text().as_string();
+
+		sscanf(orientation_vec, "%f %f %f", &x, &y, &z);
+		orientation.eulerAngles(vec3(x, y, z));
+	}
+	op = sceneElement->child("scale");
+	if (op != NULL){
+		const char* scale_vec = op.text().as_string();
+
+		sscanf(scale_vec, "%f %f %f", &x, &y, &z);
+		scale.set(vec3(x, y, z));
+	}
+
+	// now, lets make the mesh of Sphere
+	TriangleMesh* boxMesh = MeshSweeper::makeBox(center, orientation, scale);
+
+	Primitive* primitive = new TriangleMeshShape(boxMesh);
+
+	if ((op = sceneElement->child("transform")) != NULL) {
+		vec3 position(0, 0, 0);
+		quat q(vec3(0, 0, 0));
+		vec3 scale(1, 1, 1);
+		float x, y, z;
+
+		xml_object_range<xml_node_iterator> transformations = op.children();
+
+		for (xml_node_iterator transformation = transformations.begin(); transformation != transformations.end(); ++transformation)
+		{
+			if (strcmp(transformation->name(), "position") == 0)
+			{
+				const char * stringTranslation = transformation->text().as_string();
+
+				sscanf(stringTranslation, "%f %f %f", &x, &y, &z);
+				vec3 translationVec(x, y, z);
+				position = translationVec;
+			}
+			else if (strcmp(transformation->name(), "scale") == 0)
+			{
+				float s_ = transformation->text().as_float();
+				vec3 newS(s_, s_, s_);
+				scale = newS;
+			}
+			else if (strcmp(transformation->name(), "rotation") == 0)
+			{
+				float angle = transformation->child("angle").text().as_float();
+
+				const char * _Axis = transformation->child("axis").text().as_string();
+				sscanf(_Axis, "%f %f %f", &x, &y, &z);
+				vec3 axis(x, y, z);
+				q = quat(axis, angle);
+			}
+
+			boxMesh->transform(mat4::TRS(position, q, scale));
+		}
+	}
+	if ((op = sceneElement->child("material")) != NULL) {
+		Material * material = parseMaterial(op);
+		primitive->setMaterial(material);
+	}
+
+	return new Actor(*primitive);
+}
+
+Actor* Parser::parseSphere(xml_node_iterator sceneElement)
+{
+	// default values
+	vec3 center(0, 0, 0);
+	REAL radius = 1.0;
+	int meridians = 16;
+
+	// opt values
+	xml_node op;
+	op = sceneElement->child("center");
+	REAL x, y, z;
+	if (op != NULL)
+	{
+		const char* center_vector = op.text().as_string();
+
+		sscanf(center_vector, "%f %f %f", &x, &y, &z);
+		center.set(x, y, z);
+	}
+	op = sceneElement->child("radius");
+	if (op != NULL)
+		radius = op.text().as_float();
+	op = sceneElement->child("meridians");
+	if (op != NULL)
+		meridians = op.text().as_int();
+
+	// now, lets make the mesh of Sphere
+	TriangleMesh* sphereMesh = MeshSweeper::makeSphere(center, radius, meridians);
+
+	Primitive* primitive = new TriangleMeshShape(sphereMesh);
+
+	if ((op = sceneElement->child("transform")) != NULL) {
+		vec3 position(0, 0, 0);
+		quat q(vec3(0, 0, 0));
+		vec3 scale(1, 1, 1);
+		float x, y, z;
+
+		xml_object_range<xml_node_iterator> transformations = op.children();
+
+		for (xml_node_iterator transformation = transformations.begin(); transformation != transformations.end(); ++transformation)
+		{
+			if (strcmp(transformation->name(), "position") == 0)
+			{
+				const char * stringTranslation = transformation->text().as_string();
+
+				sscanf(stringTranslation, "%f %f %f", &x, &y, &z);
+				vec3 translationVec(x, y, z);
+				position = translationVec;
+			}
+			else if (strcmp(transformation->name(), "scale") == 0)
+			{
+				float s_ = transformation->text().as_float();
+				vec3 newS(s_, s_, s_);
+				scale = newS;
+			}
+			else if (strcmp(transformation->name(), "rotation") == 0)
+			{
+				float angle = transformation->child("angle").text().as_float();
+
+				const char * _Axis = transformation->child("axis").text().as_string();
+				sscanf(_Axis, "%f %f %f", &x, &y, &z);
+				vec3 axis(x, y, z);
+				q = quat(axis, angle);
+			}
+
+			sphereMesh->transform(mat4::TRS(position, q, scale));
+		}
+	}
+	if ((op = sceneElement->child("material")) != NULL) {
+		Material * material = parseMaterial(op);
+		primitive->setMaterial(material);
+	}
+
+	return new Actor(*primitive);
+
+}
+
 Light* Parser::parseLight(xml_node_iterator sceneElement)
 {
 	// setting the light
-	REAL x,y,z;
+	REAL x, y, z;
 
 	const char* type = sceneElement->attribute("type").value();
 	Light * l;
 
 	// checking the type of light
-	if (strcmp(type,"point") == 0)
+	if (strcmp(type, "point") == 0)
 	{
-		
+
 		// positon
 		const char* pos = sceneElement->child("position").text().as_string();
-		sscanf(pos,"%f %f %f",&x,&y,&z);
+		sscanf(pos, "%f %f %f", &x, &y, &z);
 
-		vec3 position(x,y,z);
+		vec3 position(x, y, z);
 
 		// optional settings
 		// color
 		xml_node op = sceneElement->child("color");
 		Color color = Color::white;
-		if (op != NULL) 
+		if (op != NULL)
 		{
 			const char* c = op.text().as_string();
-			sscanf(c,"%f %f %f",&x,&y,&z);
+			sscanf(c, "%f %f %f", &x, &y, &z);
 
 			color.setRGB(x, y, z);
 		}
-		l = new Light(position,color);
-		int falloff=0;
+		l = new Light(position, color);
+		int falloff = 0;
 
 		// setting falloff
 		op = sceneElement->child("falloff");
 		if (op != NULL) {
 			falloff = op.text().as_int();
 			switch (falloff) {
-				case 1:
-					l->flags.enable(Light::Linear, true);
-					break;
-				case 2:
-					l->flags.enable(Light::Squared, true);
-					break;
+			case 1:
+				l->flags.enable(Light::Linear, true);
+				break;
+			case 2:
+				l->flags.enable(Light::Squared, true);
+				break;
 			}
 		}
 	}
-	else if (strcmp(type,"directional") == 0)
+	else if (strcmp(type, "directional") == 0)
 	{
-		
+
 		// direction
 		const char* dir = sceneElement->child("direction").text().as_string();
-		sscanf(dir,"%f %f %f",&x,&y,&z);
+		sscanf(dir, "%f %f %f", &x, &y, &z);
 
-		vec3 direction(x,y,z);
+		vec3 direction(x, y, z);
 
 		// optional settings
 		// color
 		xml_node op = sceneElement->child("color");
 		Color color = Color::white;
-		if (op != NULL) 
+		if (op != NULL)
 		{
 			const char* c = op.text().as_string();
-			sscanf(c,"%f %f %f",&x,&y,&z);
+			sscanf(c, "%f %f %f", &x, &y, &z);
 
-			color.setRGB(x,y,z);
+			color.setRGB(x, y, z);
 		}
-		l = new Light(direction,color);
+		l = new Light(direction, color);
 		l->setDirectional(true);
 	}
-	else if(strcmp(type,"spot") == 0)
+	else if (strcmp(type, "spot") == 0)
 	{
 		///// TODO: OPCIONAL !
 		//// .
@@ -215,7 +553,7 @@ Actor* Parser::parseMesh(xml_node_iterator sceneElement)
 {
 	// setting the mesh
 	const char* filename = sceneElement->attribute("file").value();
-
+	
 	TriangleMesh* mesh = MeshReader().execute(filename);
 
 	Primitive* primitive = new TriangleMeshShape(mesh);
@@ -224,7 +562,7 @@ Actor* Parser::parseMesh(xml_node_iterator sceneElement)
 	if ((op = sceneElement->child("transform")) != NULL) {
 		vec3 position(0, 0, 0);
 		quat q(vec3(0, 0, 0));
-		vec3 scale(1,1,1);
+		vec3 scale(1, 1, 1);
 		float x, y, z;
 
 		xml_object_range<xml_node_iterator> transformations = op.children();
@@ -300,4 +638,3 @@ Material* Parser::parseMaterial(xml_node xml_mat)
 
 	return material;
 }
-

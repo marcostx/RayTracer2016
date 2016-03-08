@@ -7,6 +7,7 @@
 #include "RayTracer.h"
 #include "pugixml.hpp"
 #include "Parser.h"
+#include <iostream>
 
 #define WIN_W 1024
 #define WIN_H 768
@@ -215,7 +216,7 @@ idleCallback()
 void
 keyboardCallback(unsigned char key, int /*x*/, int /*y*/)
 {
-  glutSetWindow(currentWindowId);
+	glutSetWindow(mainWindowId);
   keys[key] = true;
   //glutPostRedisplay();
 }
@@ -223,7 +224,7 @@ keyboardCallback(unsigned char key, int /*x*/, int /*y*/)
 void
 keyboardUpCallback(unsigned char key, int /*x*/, int /*y*/)
 {
-  glutSetWindow(currentWindowId);
+	glutSetWindow(mainWindowId);
   keys[key] = false;
   switch (key)
   {
@@ -231,11 +232,11 @@ keyboardUpCallback(unsigned char key, int /*x*/, int /*y*/)
     exit(EXIT_SUCCESS);
     break;
   case 't':
-    traceFlag = true;
+    traceFlag ^= true;
     glutPostRedisplay();
     break;
   case 'o':
-    animateFlag = true;
+    animateFlag ^= true;
     glutIdleFunc(animateFlag ? idleCallback : 0);
     glutPostRedisplay();
     break;
@@ -251,6 +252,34 @@ void glutCallbacks()
   glutKeyboardUpFunc(keyboardUpCallback);
 }
 
+Actor*
+newActor(TriangleMesh* mesh,
+const vec3f& position = vec3f::null(),
+const vec3f& size = vec3f(1),
+const Color& color = Color::white)
+{
+	Primitive* p = new TriangleMeshShape(mesh);
+
+	p->setMaterial(MaterialFactory::New(color));
+	p->setTransform(position, quat::identity(), size);
+	return new Actor(*p);
+}
+
+Scene*
+createTestScene()
+{
+	Scene* scene = new Scene("test");
+	TriangleMesh* s = MeshSweeper::makeSphere();
+
+	scene->addActor(newActor(s, vec3(-3, -3, 0), vec3(1, 1, 1), Color::yellow));
+	scene->addActor(newActor(s, vec3(+3, -3, 0), vec3(2, 1, 1), Color::green));
+	scene->addActor(newActor(s, vec3(+3, +3, 0), vec3(1, 2, 1), Color::red));
+	scene->addActor(newActor(s, vec3(-3, +3, 0), vec3(1, 1, 2), Color::blue));
+	s = MeshReader().execute("f-16.obj");
+	scene->addActor(newActor(s, vec3(2, -4, -10)));
+	return scene;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -264,12 +293,17 @@ main(int argc, char **argv)
   sceneParser->parseImage(H, W);
 
   camera = sceneParser->parseCamera();
-  scene = sceneParser->parseScene();
+  scene = createTestScene();
 
   // init OpenGL
   initGL(&argc, argv);
   glutDisplayFunc(displayCallback);
   glutReshapeFunc(reshapeCallback);
+  glutMouseFunc(mouseCallback);
+  glutMotionFunc(motionCallback);
+  glutMouseWheelFunc(mouseWheelCallback);
+  glutKeyboardFunc(keyboardCallback);
+  glutKeyboardUpFunc(keyboardUpCallback);
   glutCallbacks();
 
   // create the renderers

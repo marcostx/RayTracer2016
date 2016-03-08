@@ -41,7 +41,7 @@ RayTracer::RayTracer(Scene& scene, Camera* camera):
 //[]---------------------------------------------------[]
 {
   // TODO: UNCOMMENT THE CODE BELOW
-  /*
+  
   int n = scene.getNumberOfActors();
 
   printf("Building aggregates for %d actors...\n", n);
@@ -86,7 +86,7 @@ RayTracer::RayTracer(Scene& scene, Camera* camera):
   }
   printf("BVH(s) built: %d (%d nodes)\n", aggregates.size() + 1, totalNodes);
   printElapsedTime("", clock() - t);
-  */
+ 
 }
 
 //
@@ -232,16 +232,16 @@ RayTracer::trace(const Ray& ray, uint level, REAL weight)
 //|  @return color of the ray                           |
 //[]---------------------------------------------------[]
 {
-	// limiar
-	if (weight < getMinWeight() && level < getMaxRecursionLevel())
+	// limiar	
+	if (weight > getMinWeight() && level < getMaxRecursionLevel())
 	{
 		Intersection inter_;
 		numberOfRays++;
 
 		// if the ray intersect some actor in scene
-		if (aggregate->intersect(ray, inter_))
+ 		if (aggregate->intersect(ray, inter_))
 		{
-			Color r_;
+			Color r_(0,0,0);
 
 			LightIterator lit = scene->getLightIterator();
 
