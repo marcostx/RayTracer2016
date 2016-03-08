@@ -3,7 +3,7 @@
 //|                          GVSG Graphics Library                           |
 //|                               Version 1.0                                |
 //|                                                                          |
-//|              Copyright® 2007-2016, Paulo Aristarco Pagliosa              |
+//|              CopyrightÂ® 2007-2016, Paulo Aristarco Pagliosa              |
 //|              All Rights Reserved.                                        |
 //|                                                                          |
 //[]------------------------------------------------------------------------[]
@@ -24,7 +24,7 @@ using namespace Graphics;
 void
 printElapsedTime(const char* s, clock_t time)
 {
-  printf("%sElapsed time: %.4f s\n", s, (REAL)time / CLOCKS_PER_SEC);
+	printf("%sElapsed time: %.4f s\n", s, (REAL)time / CLOCKS_PER_SEC);
 }
 
 
@@ -32,61 +32,61 @@ printElapsedTime(const char* s, clock_t time)
 //
 // RayTracer implementation
 // =========
-RayTracer::RayTracer(Scene& scene, Camera* camera):
-  Renderer(scene, camera),
-  maxRecursionLevel(6),
-  minWeight(MIN_WEIGHT)
+RayTracer::RayTracer(Scene& scene, Camera* camera) :
+Renderer(scene, camera),
+maxRecursionLevel(6),
+minWeight(MIN_WEIGHT)
 //[]---------------------------------------------------[]
 //|  Constructor                                        |
 //[]---------------------------------------------------[]
 {
-  // TODO: UNCOMMENT THE CODE BELOW
-  
-  int n = scene.getNumberOfActors();
+	// TODO: UNCOMMENT THE CODE BELOW
 
-  printf("Building aggregates for %d actors...\n", n);
+	int n = scene.getNumberOfActors();
 
-  clock_t t = clock();
-  Array<ModelPtr> models(n);
-  map<uint, ModelPtr> aggregates;
-  int totalNodes = 0;
-  int i = 1;
+	printf("Building aggregates for %d actors...\n", n);
 
-  for (ActorIterator ait(scene.getActorIterator()); ait; i++)
-  {
-    const Actor* a = ait++;
+	clock_t t = clock();
+	Array<ModelPtr> models(n);
+	map<uint, ModelPtr> aggregates;
+	int totalNodes = 0;
+	int i = 1;
 
-    printf("Processing actor %d/%d...\r", i, n);
-    if (!a->isVisible())
-      continue;
+	for (ActorIterator ait(scene.getActorIterator()); ait; i++)
+	{
+		const Actor* a = ait++;
 
-    Primitive* p = dynamic_cast<Primitive*>(a->getModel());
-    const TriangleMesh* mesh = p->triangleMesh();
+		printf("Processing actor %d/%d...\r", i, n);
+		if (!a->isVisible())
+			continue;
 
-    if (mesh != 0)
-    {
-      ModelPtr& a = aggregates[mesh->id];
+		Primitive* p = dynamic_cast<Primitive*>(a->getModel());
+		const TriangleMesh* mesh = p->triangleMesh();
 
-      if (a == 0)
-      {
-        BVH* bvh = new BVH(std::move(p->refine()));
+		if (mesh != 0)
+		{
+			ModelPtr& a = aggregates[mesh->id];
 
-        totalNodes += bvh->size();
-        a = bvh;
-      }
-      models.add(new ModelInstance(*a, *p));
-    }
-  }
-  printf("Building scene aggregate...\n");
-  {
-    BVH* bvh = new BVH(std::move(models));
+			if (a == 0)
+			{
+				BVH* bvh = new BVH(std::move(p->refine()));
 
-    totalNodes += bvh->size();
-    aggregate = bvh;
-  }
-  printf("BVH(s) built: %d (%d nodes)\n", aggregates.size() + 1, totalNodes);
-  printElapsedTime("", clock() - t);
- 
+				totalNodes += bvh->size();
+				a = bvh;
+			}
+			models.add(new ModelInstance(*a, *p));
+		}
+	}
+	printf("Building scene aggregate...\n");
+	{
+		BVH* bvh = new BVH(std::move(models));
+
+		totalNodes += bvh->size();
+		aggregate = bvh;
+	}
+	printf("BVH(s) built: %d (%d nodes)\n", aggregates.size() + 1, totalNodes);
+	printElapsedTime("", clock() - t);
+
 }
 
 //
@@ -110,7 +110,7 @@ RayTracer::render()
 //|  Render                                             |
 //[]---------------------------------------------------[]
 {
-  System::warning("Invoke renderImage(image) to run the ray tracer\n");
+	System::warning("Invoke renderImage(image) to run the ray tracer\n");
 }
 
 static int64 numberOfRays;
@@ -122,24 +122,24 @@ RayTracer::renderImage(Image& image)
 //|  Run the ray tracer                                 |
 //[]---------------------------------------------------[]
 {
-  clock_t t = clock();
+	clock_t t = clock();
 
-  image.getSize(W, H);
-  // init auxiliary VRC
-  VRC_n = camera->getViewPlaneNormal();
-  VRC_v = camera->getViewUp();
-  VRC_u = VRC_v.cross(VRC_n);
-  // init auxiliary mapping variables
-  I_w = Math::inverse<REAL>(REAL(W));
-  I_h = Math::inverse<REAL>(REAL(H));
+	image.getSize(W, H);
+	// init auxiliary VRC
+	VRC_n = camera->getViewPlaneNormal();
+	VRC_v = camera->getViewUp();
+	VRC_u = VRC_v.cross(VRC_n);
+	// init auxiliary mapping variables
+	I_w = Math::inverse<REAL>(REAL(W));
+	I_h = Math::inverse<REAL>(REAL(H));
 
-  REAL height = camera->windowHeight();
+	REAL height = camera->windowHeight();
 
-  W >= H ? V_w = (V_h = height) * W * I_h : V_h = (V_w = height) * H * I_w;
-  scan(image);
-  printf("\nNumber of rays: %lu", numberOfRays);
-  printf("\nNumber of hits: %lu", numberOfHits);
-  printElapsedTime("\nDONE! ", clock() - t);
+	W >= H ? V_w = (V_h = height) * W * I_h : V_h = (V_w = height) * H * I_w;
+	scan(image);
+	printf("\nNumber of rays: %lu", numberOfRays);
+	printf("\nNumber of hits: %lu", numberOfHits);
+	printElapsedTime("\nDONE! ", clock() - t);
 }
 
 static Ray pixelRay;
@@ -147,7 +147,7 @@ static Ray pixelRay;
 inline vec3
 VRC_point(REAL x, REAL y)
 {
-  return V_w * (x * I_w - 0.5f) * VRC_u + V_h * (y * I_h - 0.5f) * VRC_v;
+	return V_w * (x * I_w - 0.5f) * VRC_u + V_h * (y * I_h - 0.5f) * VRC_v;
 }
 
 void
@@ -158,18 +158,18 @@ RayTracer::setPixelRay(REAL x, REAL y)
 //|  @param y cordinates of the pixel                   |
 //[]---------------------------------------------------[]
 {
-  vec3 p = VRC_point(x, y);
+	vec3 p = VRC_point(x, y);
 
-  switch (camera->getProjectionType())
-  {
-    case Camera::Perspective:
-      pixelRay.direction = (p - camera->getDistance() * VRC_n).versor();
-      break;
+	switch (camera->getProjectionType())
+	{
+	case Camera::Perspective:
+		pixelRay.direction = (p - camera->getDistance() * VRC_n).versor();
+		break;
 
-    case Camera::Parallel:
-      pixelRay.origin = camera->getPosition() + p;
-      break;
-  }
+	case Camera::Parallel:
+		pixelRay.origin = camera->getPosition() + p;
+		break;
+	}
 }
 
 void
@@ -178,22 +178,22 @@ RayTracer::scan(Image& image)
 //|  Basic scan with optional jitter                    |
 //[]---------------------------------------------------[]
 {
-  // init pixel ray
-  pixelRay = Ray(camera->getPosition(), -VRC_n);
-  numberOfRays = numberOfHits = 0;
+	// init pixel ray
+	pixelRay = Ray(camera->getPosition(), -VRC_n);
+	numberOfRays = numberOfHits = 0;
 
-  Pixel* pixels = new Pixel[W];
+	Pixel* pixels = new Pixel[W];
 
-  for (int j = 0; j < H; j++)
-  {
-    REAL y = j + 0.5f;
+	for (int j = 0; j < H; j++)
+	{
+		REAL y = j + 0.5f;
 
-    printf("Scanning line %d of %d\r", j + 1, H);
-    for (int i = 0; i < W; i++)
-      pixels[i] = shoot(i + 0.5f, y);
-    image.write(j, pixels);
-  }
-  delete []pixels;
+		printf("Scanning line %d of %d\r", j + 1, H);
+		for (int i = 0; i < W; i++)
+			pixels[i] = shoot(i + 0.5f, y);
+		image.write(j, pixels);
+	}
+	delete[]pixels;
 }
 
 Color
@@ -205,21 +205,21 @@ RayTracer::shoot(REAL x, REAL y)
 //|  @return RGB color of the pixel                     |
 //[]---------------------------------------------------[]
 {
-  // set pixel ray
-  setPixelRay(x, y);
+	// set pixel ray
+	setPixelRay(x, y);
 
-  // trace pixel ray
-  Color color = trace(pixelRay, 0, 1.0f);
+	// trace pixel ray
+	Color color = trace(pixelRay, 0, 1.0f);
 
-  // adjust RGB color
-  if (color.r > 1.0f)
-    color.r = 1.0f;
-  if (color.g > 1.0f)
-    color.g = 1.0f;
-  if (color.b > 1.0f)
-    color.b = 1.0f;
-  // return pixel color
-  return color;
+	// adjust RGB color
+	if (color.r > 1.0f)
+		color.r = 1.0f;
+	if (color.g > 1.0f)
+		color.g = 1.0f;
+	if (color.b > 1.0f)
+		color.b = 1.0f;
+	// return pixel color
+	return color;
 }
 
 Color
@@ -232,85 +232,86 @@ RayTracer::trace(const Ray& ray, uint level, REAL weight)
 //|  @return color of the ray                           |
 //[]---------------------------------------------------[]
 {
-	// limiar	
-	if (weight > getMinWeight() && level < getMaxRecursionLevel())
+	// limiar
+	if (weight <= getMinWeight() || level > getMaxRecursionLevel())
+		return Color::black;
+
+	else
+		return shade(ray, level, weight);
+
+	return Color::black;
+}
+
+Color
+RayTracer::shade(const Ray& ray, uint level, REAL weight)
+{
+	Intersection inter_;
+	numberOfRays++;
+	// if the ray intersect some actor in scene
+	if (aggregate->intersect(ray, inter_))
 	{
-		Intersection inter_;
-		numberOfRays++;
+		numberOfHits++;
+		// default color
+		Color r_(0, 0, 0);
 
-		// if the ray intersect some actor in scene
- 		if (aggregate->intersect(ray, inter_))
+		// getting the array iterator of lights in scene
+		LightIterator lit = scene->getLightIterator();
+
+		while (lit.current() != 0)
 		{
-			Color r_(0,0,0);
+			vec3 L;
 
-			LightIterator lit = scene->getLightIterator();
+			// current light
+			Light* light = lit.current();
 
-			while (lit.current() != 0)
+			// obtaining the light attr 
+			if (light->isDirectional())
+				L = light->position.versor();
+			// not directional light ..
+			else
+				// ray direction from light position to pixel ray intersection point
+				L = (inter_.p - light->position).versor();
+
+			Ray shadowR(inter_.p, -L, 0.001f);
+			Intersection shadowRayInter;
+
+			// Now, lets see if the shadow ray intersect another actor in scene
+			// cos, in this case, the color of the material at point inter.p will
+			// be black
+			if (!aggregate->intersect(shadowR, shadowRayInter))
 			{
-				vec3 L;
-				double mDistance; // max distance to try a intersection
+				Color difuseColor = inter_.object->getMaterial()->surface.diffuse;
+				vec3 normal = inter_.triangle->normal(inter_);
 
-				Light* light = lit.current();
+				if ((normal.negate()).dot(L) > 0.0)
+					r_ += difuseColor * (normal.negate()).dot(L); // updating the color 
 
-				// obtaining the light attr 
-
-				if (light->isDirectional())
-				{
-					L = light->position.versor();
-					mDistance = 70;
-				}
-				// not directional light ..
-				else
-				{
-					// ray direction from light position to pixel ray intersection point
-					L = (inter_.p - light->position).versor();
-					mDistance = (inter_.p - light->position).length();
-				}
-
-				Ray shadowR(inter_.p, -L, 0.001f, mDistance);
-				Intersection shadowRayInter;
-
-				// Now, lets see if the shadow ray intersect another actor in scene
-				// cos, in this case, the color of the material at point inter.p will
-				// be black
-				if (!aggregate->intersect(shadowR, shadowRayInter))
-				{
-					Color difuseColor = inter_.object->getMaterial()->surface.diffuse;
-					vec3 normalAtP = inter_.triangle->normal(inter_);
-
-					REAL alphaCos = (normalAtP.negate()).dot(L);
-
-					if (Math::isPositive(alphaCos))
-						r_ += difuseColor * alphaCos * light->getScaledColor(mDistance); // updating the color 
-
-				}
-				lit++;
 			}
-
-			Color Or;
-
-			Or = inter_.object->getMaterial()->surface.specular;
-
-			if (Or.r != 0.0 && Or.g != 0.0 && Or.b != 0.0)
-			{
-				// N
-				vec3 normalAtP = inter_.triangle->normal(inter_);
-				// Vr = (V - (2 * (N*V))N
-				vec3 directionOfReflection = (ray.direction - (2 * normalAtP.dot(ray.direction)) * normalAtP).versor();
-
-				Ray reflectionRay(inter_.p, directionOfReflection, 0.0001f);
-
-				// getting the highest component value
-				float highestComponent = std::max(std::max(Or.r, Or.g), Or.b);
-
-				r_ += Or * trace(reflectionRay, level + 1, weight * highestComponent);
-			}
-
-			return inter_.object->getMaterial()->surface.ambient * scene->ambientLight + r_;
+			lit++;
 		}
-		else
-			return scene->backgroundColor;
+
+		// reflection color
+		Color Or;
+
+		Or = inter_.object->getMaterial()->surface.specular;
+
+		if (Or.r != 0.0 && Or.g != 0.0 && Or.b != 0.0)
+		{
+			// N
+			vec3 normalAtP = inter_.triangle->normal(inter_);
+			// Vr = (V - (2 * (N*V))N
+			vec3 directionOfReflection = (ray.direction - (2 * normalAtP.dot(ray.direction)) * normalAtP).versor();
+
+			Ray reflectionRay(inter_.p, directionOfReflection, 0.0001f);
+
+			// getting the highest component value
+			float highestComponent = std::max(std::max(Or.r, Or.g), Or.b);
+
+			r_ += Or * trace(reflectionRay, level + 1, weight * highestComponent);
+		}
+
+		return inter_.object->getMaterial()->surface.ambient * scene->ambientLight + r_;
 	}
 	else
-		return Color::black;
+		return scene->backgroundColor;
 }
