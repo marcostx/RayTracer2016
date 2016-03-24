@@ -3,7 +3,7 @@
 //|                          GVSG Graphics Library                           |
 //|                               Version 1.0                                |
 //|                                                                          |
-//|              Copyright® 2007-2016, Paulo Aristarco Pagliosa              |
+//|              CopyrightÂ® 2007-2016, Paulo Aristarco Pagliosa              |
 //|              All Rights Reserved.                                        |
 //|                                                                          |
 //[]------------------------------------------------------------------------[]
@@ -18,6 +18,9 @@
 #include "RayTracer.h"
 #include "algorithm"
 #include <stdlib.h>
+#include <algorithm>
+#include <math.h>
+#include <iostream>
 
 using namespace std;
 using namespace Graphics;
@@ -50,12 +53,14 @@ minWeight(MIN_WEIGHT)
 	clock_t t = clock();
 	Array<ModelPtr> models(n);
 	map<uint, ModelPtr> aggregates;
+	string actorNames;
 	int totalNodes = 0;
 	int i = 1;
 
 	for (ActorIterator ait(scene.getActorIterator()); ait; i++)
 	{
 		const Actor* a = ait++;
+		printf("ator nome : %s\n", a->getName());
 
 		printf("Processing actor %d/%d...\r", i, n);
 		if (!a->isVisible())
@@ -178,6 +183,29 @@ RayTracer::setPixelRay(REAL x, REAL y)
 }
 
 void
+RayTracer::clearVisitedMatrix(int rows, int cols)
+{
+	for (int i = 0; i < rows; i++)
+		for (int j = 0; j < cols; j++)
+			visited[i][j] = Coordinate(-99999,-99999);
+}
+
+
+void
+RayTracer::printMatrix(int columns, int lines)
+{
+	for (int i = 0; i < lines; i++)
+	{
+		for (int j = 0; j < columns; j++)
+		{
+			printf("%d %d", this->visited[j][i].x, this->visited[j][i].y);
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
+
+void
 RayTracer::adaptativeScan(Image& image)
 //[]---------------------------------------------------[]
 //|  Adaptative scan for aliasing problem               |
@@ -192,30 +220,90 @@ RayTracer::adaptativeScan(Image& image)
 
 	for (int j = 0; j < H; j++)
 	{
-		// top left
 
-		//printf("Scanning line %d of %d\r", j, H);
+		printf("Scanning line %d of %d\r", j, H);
+		// matrix of visited points ... initializing
+		visited = new Coordinate*[W * 5];
+		for (int i = 0; i < W * 5; i++)
+			visited[i] = new Coordinate[5];
+
+		clearVisitedMatrix(W * 5, 5);
+
 		for (int i = 0; i < W; i++){
 			pixels[i] = subDivision(i, j, 1.0,0);
 		}
+		
+		delete[]visited;
 		image.write(j, pixels);
 	}
 	delete[]pixels;
+	
+}
+
+Color
+RayTracer::checkVisitedPoints(Color& color,double i, double j)
+{
+	double fracpart_i,fracpart_j, intpart_i,intpart_j;
+	int matrixCoordinate_i, matrixCoordinate_j;
+	matrixCoordinate_i = matrixCoordinate_j = 0;
+
+	
+
+	fracpart_i = modf(i, &intpart_i);
+	fracpart_j = modf(j, &intpart_j);
+
+	// mapping coordinates of VRC to coordinates of matrix
+	if (intpart_i == 0.0)
+		matrixCoordinate_i = abs(0 + (5 * (i-1)));
+	else if (fracpart_i == 0.25)
+		matrixCoordinate_i = abs(1 + (5 * (i - 1)));
+	else if (fracpart_i == 0.50)
+		matrixCoordinate_i = abs(2 + (5 * (i - 1)));
+	else if (fracpart_i == 0.75)
+		matrixCoordinate_i = abs(3 + (5 * (i - 1)));
+	else if (intpart_i >= 1.0){
+		matrixCoordinate_i = abs(4 + (5 * (i - 1)));
+	}
+
+	if (intpart_j == 0.0)
+		matrixCoordinate_j = 0;
+	else if (fracpart_j == 0.25)
+		matrixCoordinate_j = 1;
+	else if (fracpart_j == 0.50)
+		matrixCoordinate_j = 2;
+	else if (fracpart_j == 0.75)
+		matrixCoordinate_j = 3;
+	else if (intpart_j >= 1.0)
+		matrixCoordinate_j = 4;
+
+
+	// already visited (exclamation point)
+	if (visited[matrixCoordinate_i][matrixCoordinate_j].x != -99999){
+		color = visited[matrixCoordinate_i][matrixCoordinate_j].color;
+	}
+	else{
+		visited[matrixCoordinate_i][matrixCoordinate_j].x = i;
+		visited[matrixCoordinate_i][matrixCoordinate_j].y = j;
+		color = shoot(i, j);
+		visited[matrixCoordinate_i][matrixCoordinate_j].color = color;
+	}
+	
+	return color;
 }
 
 Color
 RayTracer::subDivision(int i, int j,REAL sub, int level)
 {
-	if (level < 6){
+	if (level <= 3){
 		Color topLeft;
 		Color topRight;
 		Color bottomLeft;
 		Color bottomRight;
 
-		topLeft = shoot(i, j);
-		topRight = shoot(i + sub, j);
-		bottomLeft = shoot(i, j + sub);
-		bottomRight = shoot(i + sub, j + sub);
+		topLeft = checkVisitedPoints(topLeft, i, j);
+		topRight = checkVisitedPoints(topRight, i + sub, j);
+		bottomLeft = checkVisitedPoints(bottomLeft, i, j + sub);
+		bottomRight = checkVisitedPoints(bottomRight, i + sub, j + sub);
 
 		// computig mean
 		Color meanColor = (topLeft + topRight + bottomLeft + bottomRight);
@@ -231,13 +319,25 @@ RayTracer::subDivision(int i, int j,REAL sub, int level)
 		if (std::max(std::max(fabs(topLeftDiff.r), fabs(topLeftDiff.g)), fabs(topLeftDiff.b)) < ADAPT_DISTANCE &&
 			std::max(std::max(fabs(topRightDiff.r), fabs(topRightDiff.g)), fabs(topRightDiff.b)) < ADAPT_DISTANCE &&
 			std::max(std::max(fabs(bottomLeftDiff.r), fabs(bottomLeftDiff.g)), fabs(bottomLeftDiff.b)) < ADAPT_DISTANCE &&
-			std::max(std::max(fabs(bottomRightDiff.r), fabs(bottomRightDiff.g)), fabs(bottomRightDiff.b)) < ADAPT_DISTANCE)
+			std::max(std::max(fabs(bottomRightDiff.r), fabs(bottomRightDiff.g)), fabs(bottomRightDiff.b)) < ADAPT_DISTANCE){
 			return meanColor;
-		else{
-			// tem que pensar melhor ...
-			//printf("teve que subdividir \n");
-			return subDivision(i, j, i / 2, level + 1);
 		}
+		
+		else{
+			// sum (Ci) / 4
+
+			Color res = (subDivision(i, j, sub / 2, level + 1) + subDivision(i + (sub / 2), j, sub / 2, level + 1)
+			+subDivision(i, j + (sub / 2), sub / 2, level + 1) + subDivision(i + (sub / 2), j + (sub / 2), sub / 2, level + 1));
+	
+			res.r = res.r / 4;
+			res.g = res.g / 4;
+			res.b = res.b / 4;
+
+			return res;
+		}
+	}
+	else{
+		return shoot(i,j);
 	}
 }
 
@@ -364,11 +464,12 @@ RayTracer::shade(const Ray& ray, uint level, REAL weight)
 
 		Or = inter_.object->getMaterial()->surface.specular;
 
+		// verifying if is necessary trace reflection ray
 		if (Or.r != 0.0 && Or.g != 0.0 && Or.b != 0.0)
 		{
 			// N
 			vec3 normalAtP = inter_.triangle->normal(inter_);
-			// Vr = (V - (2 * (N*V))N
+			// Rr = (V - (2 * (N*V))N
 			vec3 directionOfReflection = (ray.direction - (2 * normalAtP.dot(ray.direction)) * normalAtP).versor();
 
 			Ray reflectionRay(inter_.p, directionOfReflection, 0.0001f);
@@ -376,6 +477,7 @@ RayTracer::shade(const Ray& ray, uint level, REAL weight)
 			// getting the highest component value
 			float highestComponent = std::max(std::max(Or.r, Or.g), Or.b);
 
+			// recursively find the color
 			r_ += Or * trace(reflectionRay, level + 1, weight * highestComponent);
 		}
 

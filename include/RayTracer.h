@@ -27,6 +27,18 @@ namespace Graphics
 #define ADAPT_DISTANCE 0.06
 
 
+// struct to design Coordinates
+struct Coordinate
+{
+  public:
+    double x, y;
+    Color color;
+
+	Coordinate(){}
+    Coordinate(double paramx, double paramy) : x(paramx), y(paramy) {}
+    Coordinate(double paramx, double paramy,Color cC) : x(paramx), y(paramy), color(cC){}
+};
+
 //////////////////////////////////////////////////////////
 //
 // RayTracer: simple ray tracer class
@@ -40,7 +52,7 @@ public:
     Intersection hit;
 
   };
-
+  Coordinate** visited;
   // Constructor
   RayTracer(Scene&, Camera* = 0);
 
@@ -81,7 +93,9 @@ protected:
   virtual Color trace(const Ray&, uint, REAL);
   virtual Color shade(const Ray&, uint, REAL);
   virtual Color subDivision(int,int, REAL,int);
-
+  virtual Color checkVisitedPoints(Color&, double, double);
+  virtual void clearVisitedMatrix(int, int);
+  virtual void printMatrix(int, int);
   // TODO: INSERT YOUR CODE HERE
 
 }; // RayTracer

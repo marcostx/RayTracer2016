@@ -34,6 +34,7 @@ int H = WIN_H;
 // Pixels to trace a ray to
 int X = 0, Y = 0;
 bool traceFlag;
+bool trace_adaptativeFlag;
 
 // Subwindows sizes
 int x_, y_, W_, H_;
@@ -75,7 +76,7 @@ printControls()
   printf("\n"
     "Options:\n"
     "----------------\n"
-    "(o) OpenGL       (r) Ray Tracer\n");
+    "(o) OpenGL       (t) Ray Tracer(normal)\n (i) Ray Tracer(adaptative super-sampling) \n");
 }
 
 static bool drawAxes = false;
@@ -151,8 +152,10 @@ processKeys()
 				break;
 		}
 	}
-	if (camera->isModified())
+	if (camera->isModified()){
+		trace_adaptativeFlag = false;
 		traceFlag = false;
+	}
 }
 
 void
@@ -171,9 +174,9 @@ displayCallback()
 {
   glutSetWindow(mainWindowId);
   processKeys();
-  if (!traceFlag)
+  if (!traceFlag && !trace_adaptativeFlag)
     render->render();
-  else
+  else if (traceFlag)
   {
     if (frame == 0)
       frame = new GLImage(W, H);
@@ -184,11 +187,28 @@ displayCallback()
     if (timestamp != ct)
     {
       frame->lock(ImageBuffer::Write);
-      rayTracer->renderImage(*frame,true);
+      rayTracer->renderImage(*frame,false);
       frame->unlock();
       timestamp = ct;
     }
     frame->draw();
+  }
+  else if (trace_adaptativeFlag)
+  {
+	  if (frame == 0)
+		  frame = new GLImage(W, H);
+
+	  Camera* camera = rayTracer->getCamera();
+	  uint ct = camera->updateView();
+
+	  if (timestamp != ct)
+	  {
+		  frame->lock(ImageBuffer::Write);
+		  rayTracer->renderImage(*frame, true);
+		  frame->unlock();
+		  timestamp = ct;
+	  }
+	  frame->draw();
   }
   glutSwapBuffers();
 }
@@ -230,6 +250,7 @@ motionCallback(int x, int y)
   mouseY = y;
   
   traceFlag = false;
+  trace_adaptativeFlag = false;
 
   glutPostRedisplay();
 }
@@ -286,6 +307,10 @@ keyboardUpCallback(unsigned char key, int /*x*/, int /*y*/)
     traceFlag ^= true;
     glutPostRedisplay();
     break;
+  case 'i':
+	  trace_adaptativeFlag ^= true;
+	  glutPostRedisplay();
+	  break;
   case 'o':
     animateFlag ^= true;
     glutIdleFunc(animateFlag ? idleCallback : 0);
@@ -321,13 +346,16 @@ createTestScene()
 {
 	Scene* scene = new Scene("test");
 	TriangleMesh* s = MeshSweeper::makeSphere();
-
-	scene->addActor(newActor(s, vec3(-3, -3, 0), vec3(1, 1, 1), Color::yellow));
+	Actor* act = newActor(s, vec3(-3, -3, 0), vec3(1, 1, 1), Color::yellow);
+	act->setName("Xinfonildo");
+	scene->addActor(act);
 	scene->addActor(newActor(s, vec3(+3, -3, 0), vec3(2, 1, 1), Color::green));
 	scene->addActor(newActor(s, vec3(+3, +3, 0), vec3(1, 2, 1), Color::red));
 	scene->addActor(newActor(s, vec3(-3, +3, 0), vec3(1, 1, 2), Color::blue));
 	s = MeshReader().execute("f-16.obj");
-	scene->addActor(newActor(s, vec3(2, -4, -10)));
+	Actor *aac = newActor(s, vec3(2, -4, -10));
+	aac->setName("f-16.obj");
+	scene->addActor(aac);
 	return scene;
 }
 
@@ -344,7 +372,7 @@ main(int argc, char **argv)
   sceneParser->parseImage(H, W);
 
   camera = sceneParser->parseCamera();
-  scene = createTestScene();
+  scene = sceneParser->parseScene();
 
   // init OpenGL
   initGL(&argc, argv);
