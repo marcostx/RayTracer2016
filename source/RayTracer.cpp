@@ -60,7 +60,6 @@ minWeight(MIN_WEIGHT)
 	for (ActorIterator ait(scene.getActorIterator()); ait; i++)
 	{
 		const Actor* a = ait++;
-		printf("ator nome : %s\n", a->getName());
 
 		printf("Processing actor %d/%d...\r", i, n);
 		if (!a->isVisible())
@@ -71,7 +70,6 @@ minWeight(MIN_WEIGHT)
 
 		if (mesh != 0)
 		{
-			// dealing with repeated primitives in scene
 			ModelPtr& a = aggregates[mesh->id];
 
 			if (a == 0)
@@ -246,8 +244,6 @@ RayTracer::checkVisitedPoints(Color& color,double i, double j)
 	double fracpart_i,fracpart_j, intpart_i,intpart_j;
 	int matrixCoordinate_i, matrixCoordinate_j;
 	matrixCoordinate_i = matrixCoordinate_j = 0;
-
-	
 
 	fracpart_i = modf(i, &intpart_i);
 	fracpart_j = modf(j, &intpart_j);

@@ -6,7 +6,7 @@
 //|                          GVSG Graphics Library                           |
 //|                               Version 1.0                                |
 //|                                                                          |
-//|              Copyright® 2007-2016, Paulo Aristarco Pagliosa              |
+//|              Copyright  2007-2016, Paulo Aristarco Pagliosa              |
 //|              All Rights Reserved.                                        |
 //|                                                                          |
 //[]------------------------------------------------------------------------[]
@@ -27,78 +27,77 @@ namespace Graphics
 #define ADAPT_DISTANCE 0.06
 
 
-// struct to design Coordinates
-struct Coordinate
-{
-  public:
-    double x, y;
-    Color color;
+	// struct to design Coordinates
+	struct Coordinate
+	{
+	public:
+		double x, y;
+		Color color;
 
-	Coordinate(){}
-    Coordinate(double paramx, double paramy) : x(paramx), y(paramy) {}
-    Coordinate(double paramx, double paramy,Color cC) : x(paramx), y(paramy), color(cC){}
-};
+		Coordinate(){}
+		Coordinate(double paramx, double paramy) : x(paramx), y(paramy) {}
+		Coordinate(double paramx, double paramy, Color cC) : x(paramx), y(paramy), color(cC){}
+	};
 
-//////////////////////////////////////////////////////////
-//
-// RayTracer: simple ray tracer class
-// =========
-class RayTracer: public Renderer
-{
-public:
-  struct DebugInfo
-  {
-    Ray ray;
-    Intersection hit;
+	//////////////////////////////////////////////////////////
+	//
+	// RayTracer: simple ray tracer class
+	// =========
+	class RayTracer : public Renderer
+	{
+	public:
+		struct DebugInfo
+		{
+			Ray ray;
+			Intersection hit;
 
-  };
-  Coordinate** visited;
-  // Constructor
-  RayTracer(Scene&, Camera* = 0);
+		};
+		Coordinate** visited;
+		// Constructor
+		RayTracer(Scene&, Camera* = 0);
 
-  uint getMaxRecursionLevel() const
-  {
-    return maxRecursionLevel;
-  }
+		uint getMaxRecursionLevel() const
+		{
+			return maxRecursionLevel;
+		}
 
-  REAL getMinWeight() const
-  {
-    return minWeight;
-  }
+		REAL getMinWeight() const
+		{
+			return minWeight;
+		}
 
-  void setMaxRecursionLevel(uint rl)
-  {
-    maxRecursionLevel = dMin<uint>(rl, MAX_RECURSION_LEVEL);
-  }
+		void setMaxRecursionLevel(uint rl)
+		{
+			maxRecursionLevel = dMin<uint>(rl, MAX_RECURSION_LEVEL);
+		}
 
-  void setMinWeight(REAL w)
-  {
-    minWeight = dMax<REAL>(w, MIN_WEIGHT);
-  }
+		void setMinWeight(REAL w)
+		{
+			minWeight = dMax<REAL>(w, MIN_WEIGHT);
+		}
 
-  void render();
-  virtual void renderImage(Image&,bool);
+		void render();
+		virtual void renderImage(Image&, bool);
 
-  void debug(int, int, DebugInfo&);
+		void debug(int, int, DebugInfo&);
 
-protected:
-  ObjectPtr<Model> aggregate;
-  uint maxRecursionLevel;
-  REAL minWeight;
+	protected:
+		ObjectPtr<Model> aggregate;
+		uint maxRecursionLevel;
+		REAL minWeight;
 
-  virtual void scan(Image&);
-  virtual void setPixelRay(REAL, REAL);
-  virtual Color shoot(REAL, REAL);
-  virtual void adaptativeScan(Image&);
-  virtual Color trace(const Ray&, uint, REAL);
-  virtual Color shade(const Ray&, uint, REAL);
-  virtual Color subDivision(int,int, REAL,int);
-  virtual Color checkVisitedPoints(Color&, double, double);
-  virtual void clearVisitedMatrix(int, int);
-  virtual void printMatrix(int, int);
-  // TODO: INSERT YOUR CODE HERE
+		virtual void scan(Image&);
+		virtual void setPixelRay(REAL, REAL);
+		virtual Color shoot(REAL, REAL);
+		virtual void adaptativeScan(Image&);
+		virtual Color trace(const Ray&, uint, REAL);
+		virtual Color shade(const Ray&, uint, REAL);
+		virtual Color subDivision(int, int, REAL, int);
+		virtual Color checkVisitedPoints(Color&, double, double);
+		virtual void clearVisitedMatrix(int, int);
+		virtual void printMatrix(int, int);
 
-}; // RayTracer
+	}; // RayTracer
 
 } // end namespace Graphics
 

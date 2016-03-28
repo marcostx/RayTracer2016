@@ -11,22 +11,22 @@ using namespace pugi;
 using namespace Graphics;
 
 class Parser {
-	public:
-		Parser(const char * filename);
-		void parseImage(int & height, int & width);
-		Camera* parseCamera();
-		Scene* parseScene();
-		
-	private:
-		Actor* parseMesh(xml_node_iterator);
-		Light* parseLight(xml_node_iterator);
+public:
+	Parser(const char * filename);
+	void parseImage(int & height, int & width);
+	Camera* parseCamera();
+	Scene* parseScene();
 
-		Material* parseMaterial(xml_node); 
-		Actor* parseSphere(xml_node_iterator);
-		Actor* parseCone(xml_node_iterator);
-		Actor* parseBox(xml_node_iterator);
-		Actor* parseCylinder(xml_node_iterator);
+private:
+	Actor* parseMesh(xml_node_iterator);
+	Light* parseLight(xml_node_iterator);
 
-		xml_document xml;
-		xml_node root;
+	Material* parseMaterial(xml_node);
+	Actor* parseSphere(xml_node_iterator);
+	Actor* parseCone(xml_node_iterator);
+	Actor* parseBox(xml_node_iterator);
+	Actor* parseCylinder(xml_node_iterator);
+
+	xml_document xml;
+	xml_node root;
 };

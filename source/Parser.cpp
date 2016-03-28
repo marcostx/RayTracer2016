@@ -15,7 +15,7 @@ void Parser::parseImage(int & height, int & width) {
 	else
 	{
 		height = 1024;
-		width  =  728;
+		width = 728;
 	}
 }
 
@@ -62,7 +62,7 @@ Camera* Parser::parseCamera(){
 		}
 		else
 			c_->setViewAngle(90);
-				
+
 		op = camera.child("aspect");
 		if (op != NULL)
 		{
@@ -74,7 +74,7 @@ Camera* Parser::parseCamera(){
 		}
 		else
 			c_->setAspectRatio(1.0);
-				
+
 		op = camera.child("projection");
 		if (op != NULL)
 		{
@@ -87,7 +87,7 @@ Camera* Parser::parseCamera(){
 		}
 		else
 			c_->setProjectionType(Camera::Perspective);
-				
+
 		return c_;
 	}
 	// default setting
@@ -285,7 +285,7 @@ Parser::parseCone(xml_node_iterator sceneElement)
 		segments = op.text().as_int();
 
 	// now, lets make the mesh of Sphere
-	TriangleMesh* coneMesh = MeshSweeper::makeCone(center, radius, height,segments);
+	TriangleMesh* coneMesh = MeshSweeper::makeCone(center, radius, height, segments);
 
 	Primitive* primitive = new TriangleMeshShape(coneMesh);
 
@@ -329,6 +329,12 @@ Parser::parseCone(xml_node_iterator sceneElement)
 	if ((op = sceneElement->child("material")) != NULL) {
 		Material * material = parseMaterial(op);
 		primitive->setMaterial(material);
+	}
+	else
+	{
+		Material * material = MaterialFactory::New();
+		primitive->setMaterial(material->getDefault());
+
 	}
 
 	return new Actor(*primitive);
@@ -413,6 +419,12 @@ Parser::parseBox(xml_node_iterator sceneElement)
 		Material * material = parseMaterial(op);
 		primitive->setMaterial(material);
 	}
+	else
+	{
+		Material * material = MaterialFactory::New();
+		primitive->setMaterial(material->getDefault());
+
+	}
 
 	return new Actor(*primitive);
 }
@@ -487,6 +499,12 @@ Actor* Parser::parseSphere(xml_node_iterator sceneElement)
 	if ((op = sceneElement->child("material")) != NULL) {
 		Material * material = parseMaterial(op);
 		primitive->setMaterial(material);
+	}
+	else
+	{
+		Material * material = MaterialFactory::New();
+		primitive->setMaterial(material->getDefault());
+
 	}
 
 	return new Actor(*primitive);
@@ -578,7 +596,7 @@ Actor* Parser::parseMesh(xml_node_iterator sceneElement)
 {
 	// setting the mesh
 	const char* filename = sceneElement->attribute("file").value();
-	
+
 	TriangleMesh* mesh = MeshReader().execute(filename);
 
 	Primitive* primitive = new TriangleMeshShape(mesh);
@@ -624,6 +642,11 @@ Actor* Parser::parseMesh(xml_node_iterator sceneElement)
 	if ((op = sceneElement->child("material")) != NULL) {
 		Material * material = parseMaterial(op);
 		primitive->setMaterial(material);
+	}
+	else
+	{
+		Material * material = MaterialFactory::New();
+		primitive->setMaterial(material->getDefault());
 	}
 
 	return new Actor(*primitive);
