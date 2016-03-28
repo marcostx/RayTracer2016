@@ -13,7 +13,7 @@ using namespace Graphics;
 class Parser {
 	public:
 		Parser(const char * filename);
-		bool parseImage(int & height, int & width);
+		void parseImage(int & height, int & width);
 		Camera* parseCamera();
 		Scene* parseScene();
 		

@@ -22,8 +22,8 @@
 namespace Graphics
 { // begin namespace Graphics
 
-#define MIN_WEIGHT REAL(0.001)
-#define MAX_RECURSION_LEVEL 20
+#define MIN_WEIGHT REAL(0.01)
+#define MAX_RECURSION_LEVEL 6
 #define ADAPT_DISTANCE 0.06
 
 

@@ -6,20 +6,23 @@ Parser::Parser(const char * filename) {
 	root = xml.first_child();
 }
 
-bool Parser::parseImage(int & height, int & width) {
+void Parser::parseImage(int & height, int & width) {
 	xml_node xml_image = root.child("image");
 	if (xml_image != NULL) {
 		height = xml_image.child("height").text().as_int();
 		width = xml_image.child("width").text().as_int();
-		return true;
 	}
-	return false;
+	else
+	{
+		height = 1024;
+		width  =  728;
+	}
 }
 
 Camera* Parser::parseCamera(){
 	///
 	xml_node camera = root.child("camera");
-	// if empty, return NULL or	 a default camera setting
+	// if empty, return NULL
 	if (camera != NULL)
 	{
 		// filling the params
@@ -41,6 +44,7 @@ Camera* Parser::parseCamera(){
 		c_->setDistance(direction.length());
 		// setting the DOP
 		c_->setDirectionOfProjection(direction.versor());
+		// obs.: the camera obtain the focal point internally
 
 		const char* vup = camera.child("up").text().as_string();
 		sscanf(vup, "%f %f %f", &x, &y, &z);
@@ -56,6 +60,9 @@ Camera* Parser::parseCamera(){
 			float angle = op.text().as_float();
 			c_->setViewAngle(angle);
 		}
+		else
+			c_->setViewAngle(90);
+				
 		op = camera.child("aspect");
 		if (op != NULL)
 		{
@@ -65,6 +72,9 @@ Camera* Parser::parseCamera(){
 			sscanf(stringAspect, "%d:%d", &width, &height);
 			c_->setAspectRatio((float)width / (float)height);
 		}
+		else
+			c_->setAspectRatio(1.0);
+				
 		op = camera.child("projection");
 		if (op != NULL)
 		{
@@ -75,9 +85,18 @@ Camera* Parser::parseCamera(){
 			else
 				c_->setProjectionType(Camera::Perspective);
 		}
+		else
+			c_->setProjectionType(Camera::Perspective);
+				
 		return c_;
 	}
-	return NULL;
+	// default setting
+	else
+	{
+		Camera* c_ = new Camera();
+		c_->setDefaultView();
+		return c_;
+	}
 }
 
 
@@ -221,6 +240,12 @@ Parser::parseCylinder(xml_node_iterator sceneElement)
 	if ((op = sceneElement->child("material")) != NULL) {
 		Material * material = parseMaterial(op);
 		primitive->setMaterial(material);
+	}
+	else
+	{
+		Material * material = MaterialFactory::New();
+		primitive->setMaterial(material->getDefault());
+
 	}
 
 	return new Actor(*primitive);
