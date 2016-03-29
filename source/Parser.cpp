@@ -196,9 +196,9 @@ Parser::parseCylinder(xml_node_iterator sceneElement)
 		segments = op.text().as_int();
 
 	// now, lets make the mesh of Sphere
-	TriangleMesh* coneMesh = MeshSweeper::makeCone(center, radius, height, segments);
+	TriangleMesh* cylinderMesh = MeshSweeper::makeCylinder(center, radius, height, segments);
 
-	Primitive* primitive = new TriangleMeshShape(coneMesh);
+	Primitive* primitive = new TriangleMeshShape(cylinderMesh);
 
 	if ((op = sceneElement->child("transform")) != NULL) {
 		vec3 position(0, 0, 0);
@@ -234,7 +234,7 @@ Parser::parseCylinder(xml_node_iterator sceneElement)
 				q = quat(axis, angle);
 			}
 
-			coneMesh->transform(mat4::TRS(position, q, scale));
+			cylinderMesh->transform(mat4::TRS(position, q, scale));
 		}
 	}
 	if ((op = sceneElement->child("material")) != NULL) {
@@ -248,7 +248,10 @@ Parser::parseCylinder(xml_node_iterator sceneElement)
 
 	}
 
-	return new Actor(*primitive);
+	Actor* act = new Actor(*primitive);
+	act->setName("cylinder");
+
+	return act;
 }
 
 Actor*
@@ -337,7 +340,10 @@ Parser::parseCone(xml_node_iterator sceneElement)
 
 	}
 
-	return new Actor(*primitive);
+	Actor* act = new Actor(*primitive);
+	act->setName("cone");
+
+	return act;
 }
 
 Actor*
@@ -426,7 +432,10 @@ Parser::parseBox(xml_node_iterator sceneElement)
 
 	}
 
-	return new Actor(*primitive);
+	Actor* act = new Actor(*primitive);
+	act->setName("box");
+
+	return act;
 }
 
 Actor* Parser::parseSphere(xml_node_iterator sceneElement)
@@ -507,7 +516,10 @@ Actor* Parser::parseSphere(xml_node_iterator sceneElement)
 
 	}
 
-	return new Actor(*primitive);
+	Actor* act = new Actor(*primitive);
+	act->setName("sphere");
+
+	return act;
 
 }
 
@@ -649,7 +661,10 @@ Actor* Parser::parseMesh(xml_node_iterator sceneElement)
 		primitive->setMaterial(material->getDefault());
 	}
 
-	return new Actor(*primitive);
+	Actor* act = new Actor(*primitive);
+	act->setName(filename);
+
+	return act;
 }
 
 Material* Parser::parseMaterial(xml_node xml_mat)

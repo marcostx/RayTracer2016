@@ -56,30 +56,52 @@ minWeight(MIN_WEIGHT)
 	string actorNames;
 	int totalNodes = 0;
 	int i = 1;
+	int newId;
+	bool catchId = false;
+	map<string,int> idList;
 
 	for (ActorIterator ait(scene.getActorIterator()); ait; i++)
 	{
 		const Actor* a = ait++;
 
-		printf("Processing actor %d/%d...\r", i, n);
+		printf("Processing actor %d/%d...\n", i, n);
 		if (!a->isVisible())
 			continue;
 
 		Primitive* p = dynamic_cast<Primitive*>(a->getModel());
 		const TriangleMesh* mesh = p->triangleMesh();
+		// checking if the id already exists in idList
+		for (map<string, int>::iterator it = idList.begin(); it != idList.end(); ++it)
+		{
+			if (it->first == a->getName())
+			{
+				catchId = true;
+				newId = (int)idList.find(a->getName())->second;
+			}
+		}
+		// if the name of the mesh isn't in idList, put it there
+		if (!catchId)
+			idList.insert(pair<string, int>(a->getName(), mesh->id));
 
 		if (mesh != 0)
 		{
+			// if the id was found, take a pointer to a instance of Model,
+			// Otherwise, create a new bvh and add to model
 			ModelPtr& a = aggregates[mesh->id];
+			if (catchId){
+				a = aggregates[newId];
+				models.add(new ModelInstance(*a, *p));
+				catchId = false;
+			}
 
-			if (a == 0)
-			{
+			else {
 				BVH* bvh = new BVH(std::move(p->refine()));
 
 				totalNodes += bvh->size();
 				a = bvh;
+
+				models.add(new ModelInstance(*a, *p));
 			}
-			models.add(new ModelInstance(*a, *p));
 		}
 	}
 	printf("Building scene aggregate...\n");
