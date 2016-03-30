@@ -22,6 +22,9 @@
         <spot>0.3 0 0</spot>
         <shine>10</shine>
       </material>
+      <transform>
+         <position>10 10 10</position>
+      </transform>
     </mesh>
     <mesh file="f-16.obj">
       <material>
@@ -42,7 +45,7 @@
     </cylinder>
     <light type="point">
       <position>-1 0 0</position>
-      <color>1 1 1</color>
+      <color>1 1 0</color>
       <falloff>1</falloff>
     </light>
   </scene>
