@@ -58,7 +58,7 @@ minWeight(MIN_WEIGHT)
 	int i = 1;
 	int newId;
 	bool catchId = false;
-	map<string,int> idList;
+	map<string, int> idList;
 
 	for (ActorIterator ait(scene.getActorIterator()); ait; i++)
 	{
@@ -207,7 +207,7 @@ RayTracer::clearVisitedMatrix(int rows, int cols)
 {
 	for (int i = 0; i < rows; i++)
 		for (int j = 0; j < cols; j++)
-			visited[i][j] = Coordinate(-99999,-99999);
+			visited[i][j] = Coordinate(-99999, -99999);
 }
 
 
@@ -247,40 +247,40 @@ RayTracer::adaptativeScan(Image& image)
 			visited[i] = new Coordinate[5];
 
 		clearVisitedMatrix(W * 5, 5);
-		
+
 		// agregating points of the line border above
 		if (j>0)
 		{
-			for (int i = 0; i < W*5; i++)
-				visited[i][0] = border[i];
+			for (int p = 0; p < W * 5; p++)
+				visited[p][0] = border[p];
 			delete[] border;
 		}
 
 		for (int i = 0; i < W; i++){
-			pixels[i] = subDivision(i, j, 1.0,0);
+			pixels[i] = subDivision(i, j, 1.0, 0);
 		}
 
 		// storing the border
-		if (j > 0)
+		if (j < H-1)
 		{
 			border = new Coordinate[W * 5];
 
 			// saving the border (below)
-			for (int i = 4; i < W*5; i++)
-				border[i] = visited[i][0];
+			for (int p = 0; p < W * 5; p++)
+				border[p] = visited[p][4];
 		}
-		
+
 		delete[]visited;
 		image.write(j, pixels);
 	}
 	delete[]pixels;
-	
+
 }
 
 Color
-RayTracer::checkVisitedPoints(Color& color,double i, double j)
+RayTracer::checkVisitedPoints(Color& color, double i, double j)
 {
-	double fracpart_i,fracpart_j, intpart_i,intpart_j;
+	double fracpart_i, fracpart_j, intpart_i, intpart_j;
 	int matrixCoordinate_i, matrixCoordinate_j;
 	matrixCoordinate_i = matrixCoordinate_j = 0;
 
@@ -289,7 +289,7 @@ RayTracer::checkVisitedPoints(Color& color,double i, double j)
 
 	// mapping coordinates of VRC to coordinates of matrix
 	if (intpart_i == 0.0)
-		matrixCoordinate_i = abs(0 + (5 * (i-1)));
+		matrixCoordinate_i = abs(0 + (5 * (i - 1)));
 	else if (fracpart_i == 0.25)
 		matrixCoordinate_i = abs(1 + (5 * (i - 1)));
 	else if (fracpart_i == 0.50)
@@ -322,12 +322,12 @@ RayTracer::checkVisitedPoints(Color& color,double i, double j)
 		color = shoot(i, j);
 		visited[matrixCoordinate_i][matrixCoordinate_j].color = color;
 	}
-	
+
 	return color;
 }
 
 Color
-RayTracer::subDivision(int i, int j,REAL sub, int level)
+RayTracer::subDivision(int i, int j, REAL sub, int level)
 {
 	if (level <= 3){
 		Color topLeft;
@@ -357,13 +357,13 @@ RayTracer::subDivision(int i, int j,REAL sub, int level)
 			std::max(std::max(fabs(bottomRightDiff.r), fabs(bottomRightDiff.g)), fabs(bottomRightDiff.b)) < ADAPT_DISTANCE){
 			return meanColor;
 		}
-		
+
 		else{
 			// sum (Ci) / 4
 
 			Color res = (subDivision(i, j, sub / 2, level + 1) + subDivision(i + (sub / 2), j, sub / 2, level + 1)
-			+subDivision(i, j + (sub / 2), sub / 2, level + 1) + subDivision(i + (sub / 2), j + (sub / 2), sub / 2, level + 1));
-	
+				+ subDivision(i, j + (sub / 2), sub / 2, level + 1) + subDivision(i + (sub / 2), j + (sub / 2), sub / 2, level + 1));
+
 			res.r = res.r / 4;
 			res.g = res.g / 4;
 			res.b = res.b / 4;
@@ -372,7 +372,7 @@ RayTracer::subDivision(int i, int j,REAL sub, int level)
 		}
 	}
 	else{
-		return shoot(i,j);
+		return shoot(i, j);
 	}
 }
 
