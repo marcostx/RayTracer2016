@@ -52,7 +52,8 @@ namespace Graphics
 			Intersection hit;
 
 		};
-		Coordinate** visited;
+		Coordinate**  visited;
+		Coordinate* border;
 		// Constructor
 		RayTracer(Scene&, Camera* = 0);
 

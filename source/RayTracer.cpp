@@ -234,7 +234,6 @@ RayTracer::adaptativeScan(Image& image)
 	// init pixel ray
 	pixelRay = Ray(camera->getPosition(), -VRC_n);
 	numberOfRays = numberOfHits = 0;
-	int maxSubLevel = 6;
 
 	Pixel* pixels = new Pixel[W];
 
@@ -248,9 +247,27 @@ RayTracer::adaptativeScan(Image& image)
 			visited[i] = new Coordinate[5];
 
 		clearVisitedMatrix(W * 5, 5);
+		
+		// agregating points of the line border above
+		if (j>0)
+		{
+			for (int i = 0; i < W*5; i++)
+				visited[i][0] = border[i];
+			delete[] border;
+		}
 
 		for (int i = 0; i < W; i++){
 			pixels[i] = subDivision(i, j, 1.0,0);
+		}
+
+		// storing the border
+		if (j > 0)
+		{
+			border = new Coordinate[W * 5];
+
+			// saving the border (below)
+			for (int i = 4; i < W*5; i++)
+				border[i] = visited[i][0];
 		}
 		
 		delete[]visited;
