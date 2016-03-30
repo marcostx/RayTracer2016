@@ -56,6 +56,7 @@ public:
   {
     // do nothing
   }
+  Light(){}
 
   bool isDirectional() const
   {

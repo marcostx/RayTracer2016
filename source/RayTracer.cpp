@@ -56,9 +56,6 @@ minWeight(MIN_WEIGHT)
 	string actorNames;
 	int totalNodes = 0;
 	int i = 1;
-	int newId;
-	bool catchId = false;
-	map<string, int> idList;
 
 	for (ActorIterator ait(scene.getActorIterator()); ait; i++)
 	{
@@ -71,37 +68,18 @@ minWeight(MIN_WEIGHT)
 		Primitive* p = dynamic_cast<Primitive*>(a->getModel());
 		const TriangleMesh* mesh = p->triangleMesh();
 		// checking if the id already exists in idList
-		for (map<string, int>::iterator it = idList.begin(); it != idList.end(); ++it)
-		{
-			if (it->first == a->getName())
-			{
-				catchId = true;
-				newId = (int)idList.find(a->getName())->second;
-			}
-		}
-		// if the name of the mesh isn't in idList, put it there
-		if (!catchId)
-			idList.insert(pair<string, int>(a->getName(), mesh->id));
 
-		if (mesh != 0)
+		if (mesh != 0)	
 		{
-			// if the id was found, take a pointer to a instance of Model,
-			// Otherwise, create a new bvh and add to model
 			ModelPtr& a = aggregates[mesh->id];
-			if (catchId){
-				a = aggregates[newId];
-				models.add(new ModelInstance(*a, *p));
-				catchId = false;
-			}
 
-			else {
-				BVH* bvh = new BVH(std::move(p->refine()));
+			BVH* bvh = new BVH(std::move(p->refine()));
 
-				totalNodes += bvh->size();
-				a = bvh;
+			totalNodes += bvh->size();
+			a = bvh;
 
-				models.add(new ModelInstance(*a, *p));
-			}
+			models.add(new ModelInstance(*a, *p));
+			
 		}
 	}
 	printf("Building scene aggregate...\n");
@@ -209,7 +187,6 @@ RayTracer::clearVisitedMatrix(int rows, int cols)
 		for (int j = 0; j < cols; j++)
 			visited[i][j] = Coordinate(-99999, -99999);
 }
-
 
 void
 RayTracer::printMatrix(int columns, int lines)
@@ -458,6 +435,9 @@ RayTracer::shade(const Ray& ray, uint level, REAL weight)
 		// default color
 		Color r_(0, 0, 0);
 
+		// treating the precision problem
+		inter_.p = inter_.p + 0.001 * inter_.triangle->normal(inter_);
+
 		// getting the array iterator of lights in scene
 		LightIterator lit = scene->getLightIterator();
 
@@ -476,7 +456,7 @@ RayTracer::shade(const Ray& ray, uint level, REAL weight)
 				// ray direction from light position to pixel ray intersection point
 				L = (inter_.p - light->position).versor();
 
-			Ray shadowR(inter_.p, -L, 0.001f);
+			Ray shadowR(inter_.p, -L);
 			Intersection shadowRayInter;
 
 			// Now, lets see if the shadow ray intersect another actor in scene

@@ -127,7 +127,6 @@
     <ClCompile Include="source\RayTracer.cpp" />
     <ClCompile Include="source\Renderer.cpp" />
     <ClCompile Include="source\Scene.cpp" />
-    <ClCompile Include="source\SceneReader.cpp" />
     <ClCompile Include="source\Sweeper.cpp" />
     <ClCompile Include="source\TriangleMesh.cpp" />
     <ClCompile Include="source\TriangleMeshShape.cpp" />
@@ -171,7 +170,6 @@
     <ClInclude Include="include\Renderer.h" />
     <ClInclude Include="include\Scene.h" />
     <ClInclude Include="include\SceneComponent.h" />
-    <ClInclude Include="include\SceneReader.h" />
     <ClInclude Include="include\Sweeper.h" />
     <ClInclude Include="include\TriangleMesh.h" />
     <ClInclude Include="include\TriangleMeshShape.h" />

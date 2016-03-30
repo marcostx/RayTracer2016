@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <rt>
   <image>
-    <width>1000</width>
-    <height>800</height>
+    <width>800</width>
+    <height>600</height>
   </image>
   <camera>
     <position>0 0 10</position>
@@ -15,7 +15,7 @@
   <scene name="simple-scene">
     <background>0 0 0</background>
     <ambient>0.5 0.5 0.5</ambient>
-    <mesh file="camera.obj">
+    <mesh file="f-16.obj">
       <material>
         <ambient>0.2 0.2 0.2</ambient>
         <diffuse>0.5 0 0</diffuse>
@@ -23,55 +23,29 @@
         <shine>10</shine>
       </material>
       <transform>
-         <position>10 10 10</position>
+         <position>2 1 1</position>
       </transform>
     </mesh>
-    <mesh file="lampada.obj">
+    <mesh file="f-16.obj">
       <material>
         <ambient>0.2 0.2 0.2</ambient>
-        <diffuse>0.5 0 0</diffuse>
+        <diffuse>0.5 1 1</diffuse>
         <spot>0.3 0 0</spot>
         <shine>10</shine>
       </material>
-      <transform>
-         <position>4 1 7</position>
-      </transform>
     </mesh>
-    <sphere>
-      <center>0 10 20</center>
-      <radius>3</radius>
-      <height>2 3 2</height>
-    </sphere>
-    <sphere>
-      <center>10 16 38</center>
-      <radius>3</radius>
-      <height>2 3 2</height>
-    </sphere>
     <sphere>
       <center>0 0 0</center>
-      <radius>3</radius>
-      <height>10 30 2</height>
-    </sphere>
-    <sphere>
-      <center>40 15 8</center>
-      <radius>3</radius>
+      <radius>1</radius>
       <height>2 3 2</height>
     </sphere>
     <cylinder>
       <center>1 3 2</center>
-      <radius>7</radius>
+      <radius>1</radius>
     </cylinder>
-    <light type="directional">
-      <direction>-1 0 0</direction>
-    </light>
     <light type="point">
       <position>-1 0 0</position>
-      <color>1 1 1</color>
-      <falloff>1</falloff>
-    </light>
-    <light type="point">
-      <position>0 1 2</position>
-      <color>0.6 0.1 1</color>
+      <color>1 1 0</color>
       <falloff>1</falloff>
     </light>
   </scene>
