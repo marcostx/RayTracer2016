@@ -23,7 +23,7 @@
         <shine>10</shine>
       </material>
       <transform>
-         <position>0 0 0</position>
+         <position>0 1 0</position>
          <scale>0.2 0.2 0.2</scale>
       </transform>
     </mesh>

@@ -428,7 +428,7 @@ RayTracer::shade(const Ray& ray, uint level, REAL weight)
 {
 	Intersection inter_;
 	numberOfRays++;
-	// if the ray intersect some actor in scene
+	// if the pixel ray intersect some actor in scene
 	if (aggregate->intersect(ray, inter_))
 	{
 		numberOfHits++;
@@ -436,7 +436,7 @@ RayTracer::shade(const Ray& ray, uint level, REAL weight)
 		Color r_(0, 0, 0);
 
 		// treating the precision problem
-		inter_.p = inter_.p + 0.001 * inter_.triangle->normal(inter_);
+		inter_.p = inter_.p + 0.01 * inter_.triangle->normal(inter_);
 
 		// getting the array iterator of lights in scene
 		LightIterator lit = scene->getLightIterator();
